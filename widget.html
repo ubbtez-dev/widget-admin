@@ -61,13 +61,13 @@ body{
   font-weight:800;
 }
 
-/* EVERYTHING BELOW HEADER ×1.5 */
+/* STATS */
 
 .stats{
   display:flex;
   justify-content:space-between;
   text-align:center;
-  font-size:21px; /* 14 ×1.5 */
+  font-size:21px;
   font-weight:700;
 }
 
@@ -86,8 +86,10 @@ body{
   color:#ffd76a;
 }
 
+/* LIST */
+
 .list{
-  height:360px;
+  height:430px; /* ВМЕЩАЕТ 10 СЛОТОВ */
   overflow:hidden;
   transition:opacity .5s ease;
 }
@@ -95,7 +97,8 @@ body{
 .item{
   display:flex;
   justify-content:space-between;
-  padding:10px 0;
+  align-items:center;
+  height:43px; /* фиксированная высота строки */
   font-size:21px;
   font-weight:600;
   border-bottom:1px solid rgba(255,255,255,.06);
@@ -107,7 +110,7 @@ body{
 }
 
 .footer-text{
-  margin-top:16px;
+  margin-top:18px;
   text-align:center;
   font-size:16px;
   opacity:.7;
@@ -177,7 +180,6 @@ function format(n){
   return Number(n||0).toLocaleString("ru-RU");
 }
 
-/* ---- LIMIT SLOT NAME 25 CHARS ---- */
 function limitName(name){
   if(!name) return "";
   if(name.length <= 25) return name;
@@ -187,14 +189,13 @@ function limitName(name){
 function render(bonuses,totalSpent,totalWin,opened,total){
 
   const list = document.getElementById("list");
-
   const totalPages = Math.ceil(total / perPage);
   const nextIndex = bonuses.findIndex(b=>!b.opened);
 
   const maxBonus = bonuses.reduce((max,b)=>
     (b.win||0) > (max.win||0) ? b : max , {win:0});
 
-  /* Biggest win block */
+  /* Biggest win */
 
   const biggestBlock = document.getElementById("biggest");
 
@@ -205,11 +206,13 @@ function render(bonuses,totalSpent,totalWin,opened,total){
     biggestBlock.innerHTML = `🏆 —`;
   }
 
-  /* Page logic */
+  /* PAGE LOGIC */
 
   if(opened !== total){
-    clearInterval(interval);
-    interval=null;
+    if(interval){
+      clearInterval(interval);
+      interval=null;
+    }
 
     if(nextIndex>=0){
       currentPage = Math.floor(nextIndex / perPage);
@@ -244,7 +247,9 @@ function render(bonuses,totalSpent,totalWin,opened,total){
 
     list.style.opacity=1;
 
-  },200);
+  },150);
+
+  /* AUTO SWITCH ONLY IF ALL OPENED */
 
   if(opened===total && totalPages>1 && !interval){
 
@@ -252,6 +257,7 @@ function render(bonuses,totalSpent,totalWin,opened,total){
 
       currentPage++;
       if(currentPage>=totalPages) currentPage=0;
+
       render(bonuses,totalSpent,totalWin,opened,total);
 
     },6000);
