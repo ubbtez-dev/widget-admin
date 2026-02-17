@@ -163,11 +163,14 @@ function updateStats(){
   const eventCurrency = document.getElementById('eventCurrency').value;
 
   if(eventType && eventNumber && eventCurrency){
-    db.ref('events/'+eventType+'_'+eventNumber).set({
+    db.ref('events/ubtez_current').set({
+      eventType,
+      eventNumber,
+      currency: eventCurrency,
+      streamerName: 'ubtez',
       totalSpent: totalSpentVal,
       totalWin: totalWinVal,
-      bonuses,
-      currency: eventCurrency
+      bonuses
     });
   }
 }
