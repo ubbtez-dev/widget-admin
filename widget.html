@@ -68,18 +68,19 @@ db.ref('events/' + eventKey).on('value', snapshot => {
   const data = snapshot.val();
   if(!data) return;
 
-  const currency = data.eventCurrency || '$';
+  const currency = data.currency || '$';
 
   // Тип события и номер
-  document.getElementById('badge').textContent = (data.eventType||'BONUS').toUpperCase();
-  document.getElementById('eventTitle').textContent = (data.eventType||'EVENT').toUpperCase() + ' #' + (data.eventNumber||'0');
+  const eventType = (data.eventType || 'BONUS').toUpperCase();
+  document.getElementById('badge').textContent = eventType;
+  document.getElementById('eventTitle').textContent = eventType + ' #' + (data.eventNumber || '0');
   document.getElementById('streamerName').textContent = data.streamerName || 'Streamer';
 
   // Статистика
   const totalSpent = data.totalSpent || 0;
-  const totalWin = (data.bonuses||[]).reduce((sum,b)=>sum+(b.win||0),0);
-  const opened = (data.bonuses||[]).filter(b=>b.opened).length;
-  const totalCount = (data.bonuses||[]).length;
+  const totalWin = (data.bonuses || []).reduce((sum,b)=>sum+(b.win||0),0);
+  const opened = (data.bonuses || []).filter(b=>b.opened).length;
+  const totalCount = (data.bonuses || []).length;
 
   document.getElementById('totalSpent').textContent = currency + totalSpent.toLocaleString();
   document.getElementById('lossRatio').textContent = totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+'x' : '0x';
@@ -107,11 +108,11 @@ db.ref('events/' + eventKey).on('value', snapshot => {
     listEl.appendChild(separator);
   }
 
-  // Остальные бонусы в порядке из админки
+  // Остальные бонусы в порядке из админки с нумерацией
   let activeSet = false;
   remaining.forEach((b, i) => {
     const div = document.createElement('div');
-    let isActive = !b.opened && !activeSet;
+    const isActive = !b.opened && !activeSet;
     if(isActive) activeSet = true;
     div.className = 'item' + (isActive ? ' activeBonus' : '');
     const nameShort = b.name.length>15 ? b.name.slice(0,15)+'…' : b.name;
