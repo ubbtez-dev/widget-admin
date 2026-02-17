@@ -1,144 +1,210 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UBTEZ Widget</title>
+<title>UBTEZ WIDGET</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;}
-body{margin:0;background:#0e0e11;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:'Inter',sans-serif;}
-.widget{width:440px;background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);border-radius:18px;padding:22px 22px 16px;color:#fff;box-shadow:0 12px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);}
-.header{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
-.badge{background:linear-gradient(180deg,#f2f2f2,#d9d9d9);color:#000;font-weight:800;font-size:11px;padding:6px 10px;border-radius:8px;letter-spacing:0.5px;box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);}
-.title{font-size:24px;font-weight:800;letter-spacing:1px;line-height:1;}
-.subtitle{font-size:12px;font-weight:600;opacity:0.7;margin-top:4px;}
-.stats{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:12px 0;}
-.stat{text-align:center;font-weight:700;letter-spacing:0.5px;display:flex;flex-direction:column;align-items:center;}
-.stat .icon{font-size:32px;margin-bottom:4px;}
-.stat span{font-size:13px;font-weight:600;opacity:0.9;}
-.divider{width:1px;height:28px;background:rgba(255,255,255,0.12);margin:0 6px;}
-.list{border-top:1px solid rgba(255,255,255,0.08);padding-top:14px;font-size:14px;max-height:400px;overflow:hidden;transition: opacity 0.6s;}
-.item{display:flex;justify-content:space-between;padding:6px 0;font-weight:600;letter-spacing:0.3px;}
-.item span:first-child{opacity:0.95;}
-.item span:last-child{opacity:0.95;}
-.highlight{color:#ffd76a;text-shadow:0 0 6px rgba(255,215,106,0.25);}
-.activeBonus{color:#ffb347;}
-</style>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<style>
+body{
+  margin:0;
+  background:transparent;
+  font-family:'Inter',sans-serif;
+}
+
+.widget{
+  width:440px;
+  background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);
+  border-radius:18px;
+  padding:20px;
+  color:#fff;
+  border:1px solid rgba(255,255,255,0.06);
+}
+
+.header{
+  display:flex;
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.badge{
+  background:#fff;
+  color:#000;
+  font-weight:800;
+  font-size:11px;
+  padding:6px 10px;
+  border-radius:8px;
+}
+
+.title{
+  font-size:22px;
+  font-weight:800;
+}
+
+.subtitle{
+  font-size:12px;
+  opacity:.7;
+}
+
+.stats{
+  display:flex;
+  justify-content:space-between;
+  margin:12px 0 16px 0;
+}
+
+.stat{
+  text-align:center;
+  font-weight:700;
+  font-size:14px;
+}
+
+.list{
+  height:320px; /* фиксированная высота ровно под 10 слотов */
+  overflow:hidden;
+  transition:opacity .6s ease;
+}
+
+.item{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+  font-size:14px;
+  font-weight:600;
+}
+
+.highlight{
+  color:#ffd76a;
+}
+
+</style>
 </head>
+
 <body>
+
 <div class="widget">
   <div class="header">
     <div class="badge" id="badge">BONUS</div>
     <div>
       <div class="title" id="eventTitle">EVENT #0</div>
-      <div class="subtitle" id="streamerName">ubtez</div>
+      <div class="subtitle">ubtez</div>
     </div>
   </div>
+
   <div class="stats">
-    <div class="stat"><div class="icon">💰</div><span id="totalSpent">0₽</span></div>
-    <div class="divider"></div>
-    <div class="stat"><div class="icon">❌</div><span id="lossRatio">0x</span></div>
-    <div class="divider"></div>
-    <div class="stat"><div class="icon">⭐</div><span id="bonusCount">0/0</span></div>
+    <div class="stat">💰 <span id="spent">0₽</span></div>
+    <div class="stat">❌ <span id="ratio">0x</span></div>
+    <div class="stat">⭐ <span id="count">0/0</span></div>
   </div>
-  <div class="list" id="bonusList"></div>
+
+  <div class="list" id="list"></div>
 </div>
 
 <script>
-const firebaseConfig = {
+
+firebase.initializeApp({
   apiKey:"AIzaSyAvA5CAcKwuuHC2Cl8KlUbnkR9BJfp_9pw",
   authDomain:"adminwidget-b69c9.firebaseapp.com",
   databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com",
-  projectId:"adminwidget-b69c9",
-  storageBucket:"adminwidget-b69c9.appspot.com",
-  messagingSenderId:"585800098669",
-  appId:"1:585800098669:web:65fd476b2e6eb55fe73064"
-};
-firebase.initializeApp(firebaseConfig);
+  projectId:"adminwidget-b69c9"
+});
+
 const db = firebase.database();
+const ref = db.ref("events/ubtez_current");
 
-const eventKey = 'ubtez_current';
-let currentPage = 0;
-let pageTimer = null;
-const pageDelay = 5500; // 5.5 секунд задержка при переключении страниц
-const slotsPerPage = 10;
+const perPage = 10;
+let page = 0;
+let interval = null;
 
-db.ref('events/' + eventKey).on('value', snapshot => {
-  const data = snapshot.val();
+function format(n){
+  return n.toLocaleString("ru-RU");
+}
+
+function renderPage(bonuses,totalSpent,totalWin,opened,total){
+
+  const list = document.getElementById("list");
+
+  list.style.opacity=0;
+
+  setTimeout(()=>{
+    list.innerHTML="";
+
+    const start = page*perPage;
+    const end = start+perPage;
+    const slice = bonuses.slice(start,end);
+
+    slice.forEach((b,i)=>{
+      const div = document.createElement("div");
+      div.className="item";
+
+      div.innerHTML=`
+        <span>${start+i+1}. ${b.name} (${format(b.cost)}₽)</span>
+        <span>${b.opened ? format(b.win)+"₽" : "-"}</span>
+      `;
+
+      list.appendChild(div);
+    });
+
+    list.style.opacity=1;
+
+  },400);
+
+}
+
+ref.on("value",snap=>{
+
+  const data = snap.val();
   if(!data) return;
 
-  // Валюта символом
-  const currency = data.eventCurrency === 'RUB' ? '₽' : (data.eventCurrency === 'USD' ? '$' : data.eventCurrency);
-
-  document.getElementById('badge').textContent = (data.eventType||'BONUS').toUpperCase();
-  document.getElementById('eventTitle').textContent = (data.eventType||'EVENT').toUpperCase() + ' #' + (data.eventNumber||'0');
-  document.getElementById('streamerName').textContent = data.streamerName || 'ubtez';
-
+  const bonuses = data.bonuses || [];
   const totalSpent = data.totalSpent || 0;
-  const totalWin = (data.bonuses||[]).reduce((sum,b)=>sum+(b.win||0),0);
-  const opened = (data.bonuses||[]).filter(b=>b.opened).length;
-  const totalCount = (data.bonuses||[]).length;
+  const totalWin = bonuses.reduce((s,b)=>s+(b.win||0),0);
+  const opened = bonuses.filter(b=>b.opened).length;
+  const total = bonuses.length;
 
-  document.getElementById('totalSpent').textContent = totalSpent.toLocaleString() + currency;
-  document.getElementById('lossRatio').textContent = totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+'x' : '0x';
-  document.getElementById('bonusCount').textContent = opened + "/" + totalCount;
+  document.getElementById("badge").textContent =
+    (data.eventType||"BONUS").toUpperCase();
 
-  const listEl = document.getElementById('bonusList');
+  document.getElementById("eventTitle").textContent =
+    (data.eventType||"EVENT").toUpperCase()+" #"+(data.eventNumber||0);
 
-  function renderPage(page){
-    listEl.style.opacity = 0;
-    setTimeout(()=>{
-      listEl.innerHTML = '';
-      const start = page*slotsPerPage;
-      const end = start + slotsPerPage;
-      const pageSlots = (data.bonuses||[]).slice(start,end);
-      if(!pageSlots.length) return;
+  document.getElementById("spent").textContent =
+    format(totalSpent)+"₽";
 
-      // Найти максимальный бонус на этой странице
-      const maxBonus = pageSlots.reduce((max,b)=>b.win > (max.win||0)?b:max,{});
-      const remaining = pageSlots.filter(b=>b!==maxBonus);
+  document.getElementById("ratio").textContent =
+    totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+"x" : "0x";
 
-      if(maxBonus && maxBonus.win>0){
-        const div = document.createElement('div');
-        div.className='item highlight';
-        const nameShort = maxBonus.name.length>15?maxBonus.name.slice(0,15)+'…':maxBonus.name;
-        div.innerHTML = `<span>${nameShort} (${currency}${(maxBonus.cost||0).toLocaleString()})</span><span>${currency}${(maxBonus.win||0).toLocaleString()}</span>`;
-        listEl.appendChild(div);
-        const separator = document.createElement('div');
-        separator.style.borderTop='1px solid rgba(255,255,255,0.08)';
-        separator.style.margin='6px 0';
-        listEl.appendChild(separator);
+  document.getElementById("count").textContent =
+    opened+"/"+total;
+
+  /* ---------- ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ---------- */
+
+  if(interval) clearInterval(interval);
+
+  page=0;
+  renderPage(bonuses,totalSpent,totalWin,opened,total);
+
+  /* СТРОГОЕ УСЛОВИЕ:
+     переключение ТОЛЬКО если
+     opened === total
+     и бонусов больше 10
+  */
+
+  if(opened === total && total > perPage){
+
+    interval = setInterval(()=>{
+      page++;
+      if(page*perPage >= total){
+        page=0;
       }
+      renderPage(bonuses,totalSpent,totalWin,opened,total);
+    },6000); // 6 секунд
 
-      remaining.forEach((b,i)=>{
-        const div = document.createElement('div');
-        const isActive = !b.opened && !pageSlots.some(s=>s.activeSet);
-        if(isActive) b.activeSet=true;
-        div.className='item'+(isActive?' activeBonus':'');
-        const nameShort = b.name.length>15?b.name.slice(0,15)+'…':b.name;
-        div.innerHTML = `<span>${start+i+1}. ${nameShort} (${currency}${(b.cost||0).toLocaleString()})</span><span>${b.win>0?currency+(b.win||0).toLocaleString():'-'}</span>`;
-        listEl.appendChild(div);
-      });
-
-      listEl.style.opacity = 1;
-    }, 500);
   }
 
-  // Постраничный показ только после открытия всех бонусов
-  if(opened >= totalCount && totalCount > slotsPerPage){
-    if(pageTimer) clearTimeout(pageTimer);
-    renderPage(currentPage);
-    pageTimer = setTimeout(()=>{
-      currentPage = (currentPage+1) * slotsPerPage >= totalCount ? 0 : currentPage+1;
-      renderPage(currentPage);
-    }, pageDelay);
-  } else {
-    renderPage(0);
-  }
 });
+
 </script>
 </body>
 </html>
