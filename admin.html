@@ -1,228 +1,219 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ADMIN PANEL - UBTEZ</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter',sans-serif;background:#0e0e11;color:#fff;display:flex;justify-content:center;padding:40px 20px;}
-.panel{width:920px;max-width:100%;background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);border-radius:20px;padding:30px;box-shadow:0 12px 40px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.06);}
-h1{font-size:28px;font-weight:800;margin-bottom:25px;letter-spacing:1px;text-align:center;}
-.section{margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,.08);}
-label{display:block;font-size:14px;font-weight:600;margin-bottom:8px;opacity:.9;text-align:center;}
-input, select{padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#1a1221;color:#fff;font-size:14px;outline:none;height:42px;width:100%;}
-input:focus, select:focus{border-color:#ffd76a;}
-.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:end;margin-bottom:16px;}
-.input-row{display:flex;align-items:center;gap:6px;width:100%;margin:0 auto;}
-.button{background:linear-gradient(180deg,#ffd76a,#ffb347);border:none;padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer;margin-top:10px;transition:transform 0.15s ease;}
-.button:hover{transform:scale(1.05);}
-.button-small{padding:6px 10px;font-size:12px;white-space:nowrap;}
-.bonus-list{margin-top:20px;}
-.bonus-item{display:grid;grid-template-columns:24px 1fr 24px;align-items:center;gap:10px;margin-bottom:10px;border-radius:12px;padding:10px;background: rgba(255,255,255,0.02);transition: all 0.2s ease;cursor: grab;}
-.bonus-item.dragging{opacity:0.5;}
-.bonus-item.opened{opacity:0.5;}
-.flex-row{display:flex;justify-content:space-between;align-items:center;gap:10px;}
-.bonus-inputs{display:flex;gap:8px;margin-top:8px;}
-.bonus-inputs input{flex:1;}
-.delete-slot{cursor:pointer;font-weight:700;color:#ff4d4d;text-align:center;}
-@media(max-width:600px){
-.row{grid-template-columns:1fr;}
-.bonus-item{grid-template-columns:auto 1fr auto;}
-.input-row{width:100%;}
-}
-</style>
-
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<style>
+body{
+  margin:0;
+  background:#0e0e11;
+  font-family:'Inter',sans-serif;
+  display:flex;
+  justify-content:center;
+  padding:40px 20px;
+  color:#fff;
+}
+
+.panel{
+  width:900px;
+  background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);
+  padding:30px;
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.06);
+}
+
+h1{
+  text-align:center;
+  margin-bottom:30px;
+}
+
+input, select{
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.1);
+  background:#1a1221;
+  color:#fff;
+  margin-bottom:15px;
+}
+
+button{
+  background:#ffd76a;
+  border:none;
+  padding:10px 16px;
+  border-radius:12px;
+  font-weight:700;
+  cursor:pointer;
+  margin-bottom:15px;
+}
+
+.bonus{
+  background:rgba(255,255,255,.03);
+  padding:12px;
+  border-radius:12px;
+  margin-bottom:10px;
+}
+
+.row{
+  display:flex;
+  gap:10px;
+}
+
+.small{
+  flex:1;
+}
+</style>
 </head>
 <body>
 
 <div class="panel">
+
 <h1>ADMIN PANEL - UBTEZ</h1>
 
-<div class="section">
-<div class="row">
-<div>
-<label>Номер события</label>
-<input type="text" id="eventNumber" placeholder="—" />
-</div>
-<div>
-<label>Выбор события</label>
+<label>Тип события</label>
 <select id="eventType">
-<option value="">—</option>
-<option value="bonusbuy">BONUSBUY</option>
-<option value="bonushunt">BONUSHUNT</option>
+  <option value="bonusbuy">BONUSBUY</option>
+  <option value="bonushunt">BONUSHUNT</option>
 </select>
-</div>
-<div>
-<label>Валюта события</label>
-<select id="eventCurrency">
-<option value="">—</option>
-<option value="RUB">₽</option>
-<option value="USD">$</option>
-</select>
-</div>
-</div>
-</div>
 
-<div class="section">
-<label>Общая сумма трат (весь баланс)</label>
-<div class="input-row">
-<input type="text" id="totalSpent" placeholder="0"/>
-</div>
+<label>Номер события</label>
+<input type="number" id="eventNumber" placeholder="300">
 
-<label style="margin-top:16px;">Общая сумма выигрыша (авто)</label>
-<div class="input-row">
-<input type="text" id="totalWin" disabled/>
-</div>
+<label>Общая сумма трат (₽)</label>
+<input type="number" id="totalSpent" placeholder="0">
 
-<label style="margin-top:16px;">Соотношение окупаемости (авто)</label>
-<div class="input-row">
-<input type="text" id="ratio" disabled/>
-</div>
+<h3>Бонусы</h3>
+<div id="bonusList"></div>
 
-<label style="margin-top:16px;">Количество бонусов (открыто / всего)</label>
-<div class="input-row">
-<input type="text" id="bonusCount" disabled/>
-</div>
-</div>
+<button onclick="addBonus()">Добавить слот</button>
 
-<div class="section">
-<div class="flex-row">
-<button class="button" id="addBonusBtn">Добавить слот</button>
-<button class="button" id="clearSlotsBtn">Стереть слоты</button>
-</div>
-<div class="bonus-list" id="bonusList"></div>
-</div>
 </div>
 
 <script>
+
 firebase.initializeApp({
-  apiKey: "AIzaSyAvA5CAcKwuuHC2Cl8KlUbnkR9BJfp_9pw",
-  authDomain: "adminwidget-b69c9.firebaseapp.com",
-  projectId: "adminwidget-b69c9",
-  storageBucket: "adminwidget-b69c9.firebasestorage.app",
-  messagingSenderId: "585800098669",
-  appId: "1:585800098669:web:f7e7ebf11cce37b0e73064",
-  databaseURL: "https://adminwidget-b69c9-default-rtdb.firebaseio.com"
+  apiKey:"AIzaSyAvA5CAcKwuuHC2Cl8KlUbnkR9BJfp_9pw",
+  authDomain:"adminwidget-b69c9.firebaseapp.com",
+  databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com",
+  projectId:"adminwidget-b69c9"
 });
+
 const db = firebase.database();
+const ref = db.ref("events/ubtez_current");
+
 let bonuses = [];
 
-const MAX_EVENT = 999;
-const MAX_AMOUNT = 99999999;
+function save(){
 
-const eventNumberEl = document.getElementById('eventNumber');
-const totalSpentEl = document.getElementById('totalSpent');
-const totalWinEl = document.getElementById('totalWin');
-const ratioEl = document.getElementById('ratio');
-const bonusCountEl = document.getElementById('bonusCount');
-const bonusListEl = document.getElementById('bonusList');
-const addBonusBtn = document.getElementById('addBonusBtn');
-const clearSlotsBtn = document.getElementById('clearSlotsBtn');
+  const totalWin = bonuses.reduce((s,b)=>s+(b.win||0),0);
 
-function formatNumber(num){return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g," ");}
-
-function parseNumber(value){return parseInt(value.replace(/\s/g,''))||0;}
-
-function restrictAndFormat(el,max){
-  el.addEventListener('input', e=>{
-    let value = e.target.value.replace(/[^0-9]/g,'');
-    if(value===''){e.target.value=''; return;}
-    let num = parseInt(value);
-    if(num>max) num = max;
-    e.target.value = formatNumber(num);
-    updateStats();
+  ref.set({
+    streamerName:"ubtez",
+    eventType:document.getElementById("eventType").value,
+    eventNumber:Number(document.getElementById("eventNumber").value||0),
+    totalSpent:Number(document.getElementById("totalSpent").value||0),
+    totalWin:totalWin,
+    bonuses:bonuses
   });
-}
 
-function updateStats(){
-  const totalSpentVal = parseNumber(totalSpentEl.value);
-  const totalWinVal = bonuses.reduce((sum,b)=>sum+(b.win||0),0);
-  const openedCount = bonuses.filter(b=>b.opened).length;
-
-  totalWinEl.value = formatNumber(totalWinVal);
-  ratioEl.value = totalSpentVal>0?(totalWinVal/totalSpentVal).toFixed(2)+'x':'';
-  bonusCountEl.value = openedCount+' / '+bonuses.length;
-
-  const eventType = document.getElementById('eventType').value;
-  const eventNumber = parseNumber(eventNumberEl.value);
-  const eventCurrency = document.getElementById('eventCurrency').value;
-
-  // Сохраняем все данные в один узел ubtez_current
-  db.ref('events/ubtez_current').set({
-    eventType,
-    eventNumber,
-    eventCurrency,
-    streamerName: 'ubtez',
-    totalSpent: totalSpentVal,
-    totalWin: totalWinVal,
-    bonuses
-  });
 }
 
 function render(){
-  bonusListEl.innerHTML='';
-  bonuses.forEach((b,i)=>{
-    const wrapper = document.createElement('div');
-    wrapper.className='bonus-item';
-    wrapper.draggable=true;
-    if(b.opened) wrapper.classList.add('opened');
 
-    wrapper.innerHTML = `
-      <div style="text-align:center;font-weight:700;color:#ffd76a;">${i+1}</div>
-      <div style="display:flex;flex-direction:column;">
-        <div class="bonus-inputs">
-          <input type="text" placeholder="Название слота" value="${b.name||''}" ${b.opened?'disabled':''}/>
-        </div>
-        <div class="bonus-inputs">
-          <input type="text" placeholder="Сумма покупки" value="${b.cost?formatNumber(b.cost):''}" ${b.opened?'disabled':''}/>
-          <input type="text" placeholder="Сумма выигрыша" value="${b.win?formatNumber(b.win):''}" ${b.opened?'disabled':''}/>
-        </div>
-        <button class="button button-small" style="margin-top:8px;">${b.opened?'ОТКРЫТ':'ЗАКРЫТ'}</button>
+  const list = document.getElementById("bonusList");
+  list.innerHTML="";
+
+  bonuses.forEach((b,i)=>{
+
+    const div = document.createElement("div");
+    div.className="bonus";
+
+    div.innerHTML=`
+      <div class="row">
+        <input class="small" placeholder="Название"
+          value="${b.name||''}"
+          onchange="updateName(${i},this.value)">
       </div>
-      <div class="delete-slot">🗑</div>
+
+      <div class="row">
+        <input class="small" type="number" placeholder="Покупка ₽"
+          value="${b.cost||0}"
+          onchange="updateCost(${i},this.value)">
+
+        <input class="small" type="number" placeholder="Выигрыш ₽"
+          value="${b.win||0}"
+          onchange="updateWin(${i},this.value)">
+      </div>
+
+      <div class="row">
+        <button onclick="toggle(${i})">
+          ${b.opened ? "ОТКРЫТ" : "ЗАКРЫТ"}
+        </button>
+
+        <button onclick="removeBonus(${i})">Удалить</button>
+      </div>
     `;
 
-    const inputs = wrapper.querySelectorAll('input');
-    const openBtn = wrapper.querySelector('button');
-    const deleteBtn = wrapper.querySelector('.delete-slot');
+    list.appendChild(div);
 
-    restrictAndFormat(inputs[1], MAX_AMOUNT);
-    restrictAndFormat(inputs[2], MAX_AMOUNT);
-
-    inputs[0].addEventListener('input', e=>{b.name=e.target.value; updateStats();});
-    inputs[1].addEventListener('input', e=>{b.cost=parseNumber(e.target.value); updateStats();});
-    inputs[2].addEventListener('input', e=>{b.win=parseNumber(e.target.value); updateStats();});
-
-    openBtn.addEventListener('click', ()=>{b.opened=!b.opened; render();});
-    deleteBtn.addEventListener('click', ()=>{bonuses.splice(i,1); render();});
-
-    wrapper.addEventListener('dragstart', e=>{e.dataTransfer.setData('text/plain',i); wrapper.classList.add('dragging');});
-    wrapper.addEventListener('dragend', ()=>wrapper.classList.remove('dragging'));
-    wrapper.addEventListener('dragover', e=>e.preventDefault());
-    wrapper.addEventListener('drop', e=>{
-      e.preventDefault();
-      const dragged = Number(e.dataTransfer.getData('text/plain'));
-      if(dragged===i) return;
-      [bonuses[dragged], bonuses[i]] = [bonuses[i], bonuses[dragged]];
-      render();
-    });
-
-    bonusListEl.appendChild(wrapper);
   });
-  updateStats();
+
+  save();
 }
 
-restrictAndFormat(eventNumberEl, MAX_EVENT);
-restrictAndFormat(totalSpentEl, MAX_AMOUNT);
+function addBonus(){
+  bonuses.push({
+    name:"",
+    cost:0,
+    win:0,
+    opened:false
+  });
+  render();
+}
 
-addBonusBtn.addEventListener('click', ()=>{bonuses.push({name:'',cost:0,win:0,opened:false}); render();});
-clearSlotsBtn.addEventListener('click', ()=>{bonuses=[]; render();});
+function removeBonus(i){
+  bonuses.splice(i,1);
+  render();
+}
 
-render();
+function toggle(i){
+  bonuses[i].opened = !bonuses[i].opened;
+  render();
+}
+
+function updateName(i,val){
+  bonuses[i].name = val;
+  save();
+}
+
+function updateCost(i,val){
+  bonuses[i].cost = Number(val||0);
+  save();
+}
+
+function updateWin(i,val){
+  bonuses[i].win = Number(val||0);
+  save();
+}
+
+/* Подгружаем данные при открытии */
+
+ref.on("value",snap=>{
+  const data = snap.val();
+  if(!data) return;
+
+  document.getElementById("eventType").value = data.eventType || "bonusbuy";
+  document.getElementById("eventNumber").value = data.eventNumber || 0;
+  document.getElementById("totalSpent").value = data.totalSpent || 0;
+
+  bonuses = data.bonuses || [];
+  render();
+});
+
 </script>
 </body>
 </html>
