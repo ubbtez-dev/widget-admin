@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Widget</title>
+<title>Widget UBTEZ</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;}
 body{margin:0;background:#0e0e11;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:'Inter',sans-serif;}
-.widget{width:440px;background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);border-radius:18px;padding:22px 22px 16px;color:#fff;box-shadow:0 12px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);}
+.widget{width:440px;height:600px;overflow:hidden;position:relative;background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);border-radius:18px;padding:22px 22px 16px;color:#fff;box-shadow:0 12px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);}
 .header{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
 .badge{background:linear-gradient(180deg,#f2f2f2,#d9d9d9);color:#000;font-weight:800;font-size:11px;padding:6px 10px;border-radius:8px;letter-spacing:0.5px;box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);}
 .title{font-size:24px;font-weight:800;letter-spacing:1px;line-height:1;}
@@ -18,7 +18,8 @@ body{margin:0;background:#0e0e11;display:flex;justify-content:center;align-items
 .stat .icon{font-size:32px;margin-bottom:4px;}
 .stat span{font-size:13px;font-weight:600;opacity:0.9;}
 .divider{width:1px;height:28px;background:rgba(255,255,255,0.12);margin:0 6px;}
-.list{border-top:1px solid rgba(255,255,255,0.08);padding-top:14px;font-size:14px;max-height:400px;overflow:hidden;}
+.list{border-top:1px solid rgba(255,255,255,0.08);padding-top:14px;font-size:14px;height:350px;overflow:hidden;position:relative;}
+.page{position:absolute;width:100%;transition:opacity 1s ease;}
 .item{display:flex;justify-content:space-between;padding:6px 0;font-weight:600;letter-spacing:0.3px;}
 .item span:first-child{opacity:0.95;}
 .item span:last-child{opacity:0.95;}
@@ -34,7 +35,7 @@ body{margin:0;background:#0e0e11;display:flex;justify-content:center;align-items
     <div class="badge" id="badge">BONUS</div>
     <div>
       <div class="title" id="eventTitle">EVENT #0</div>
-      <div class="subtitle" id="streamerName">ubtez</div>
+      <div class="subtitle" id="streamerName">UBTEZ</div>
     </div>
   </div>
   <div class="stats">
@@ -60,64 +61,65 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Жёсткая привязка к твоему нику
-const eventKey = 'ubtez_current';
+const streamerKey = 'ubtez_current'; // фиксируем ник UBTEZ
+const pageSize = 10;
+let currentPage = 0;
+let pages = [];
 
-db.ref('events/' + eventKey).on('value', snapshot => {
+db.ref('events/' + streamerKey).on('value', snapshot => {
   const data = snapshot.val();
   if(!data) return;
 
-  // Валюта
-  let currency = '₽';
-  if(data.currency && data.currency === 'USD') currency = '$';
-  
-  // Тип события и номер
-  document.getElementById('badge').textContent = (data.eventType || 'BONUS').toUpperCase();
-  document.getElementById('eventTitle').textContent = (data.eventType || 'EVENT').toUpperCase() + ' #' + (data.eventNumber || '0');
-  document.getElementById('streamerName').textContent = data.streamerName || 'ubtez';
+  const currency = data.eventCurrency === 'RUB' ? '₽' : (data.eventCurrency || '$');
 
-  // Статистика
+  document.getElementById('badge').textContent = (data.eventType||'BONUS').toUpperCase();
+  document.getElementById('eventTitle').textContent = (data.eventType||'EVENT').toUpperCase() + ' #' + (data.eventNumber||'0');
+  document.getElementById('streamerName').textContent = data.streamerName || 'UBTEZ';
+
   const totalSpent = data.totalSpent || 0;
   const totalWin = (data.bonuses||[]).reduce((sum,b)=>sum+(b.win||0),0);
   const opened = (data.bonuses||[]).filter(b=>b.opened).length;
   const totalCount = (data.bonuses||[]).length;
 
   document.getElementById('totalSpent').textContent = currency + totalSpent.toLocaleString();
-  document.getElementById('lossRatio').textContent = totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+'x' : '0x';
+  document.getElementById('lossRatio').textContent = totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+'x':'0x';
   document.getElementById('bonusCount').textContent = opened + "/" + totalCount;
 
   const listEl = document.getElementById('bonusList');
   listEl.innerHTML = '';
-  if(!data.bonuses) return;
+  pages = [];
 
-  // Максимальный бонус
-  const maxBonus = data.bonuses.reduce((max,b)=>b.win > (max.win||0) ? b : max, {});
-  const remaining = data.bonuses.filter(b=>b !== maxBonus);
+  if(!data.bonuses || data.bonuses.length===0) return;
 
-  if(maxBonus && maxBonus.win>0){
-    const div = document.createElement('div');
-    div.className = 'item highlight';
-    const nameShort = maxBonus.name.length>15 ? maxBonus.name.slice(0,15)+'…' : maxBonus.name;
-    div.innerHTML = `<span>${nameShort} (${currency}${(maxBonus.cost||0).toLocaleString()})</span><span>${currency}${(maxBonus.win||0).toLocaleString()}</span>`;
-    listEl.appendChild(div);
-
-    const separator = document.createElement('div');
-    separator.style.borderTop='1px solid rgba(255,255,255,0.08)';
-    separator.style.margin='6px 0';
-    listEl.appendChild(separator);
+  // разбиваем бонусы на страницы
+  for(let i=0; i<data.bonuses.length; i+=pageSize){
+    const chunk = data.bonuses.slice(i,i+pageSize);
+    const pageDiv = document.createElement('div');
+    pageDiv.className='page';
+    pageDiv.style.opacity = '0';
+    chunk.forEach((b,j)=>{
+      const div = document.createElement('div');
+      const isActive = !b.opened;
+      div.className = 'item' + (isActive?' activeBonus':'');
+      const nameShort = b.name.length>15?b.name.slice(0,15)+'…':b.name;
+      div.innerHTML = `<span>${i+j+1}. ${nameShort} (${currency}${(b.cost||0).toLocaleString()})</span><span>${b.win>0?currency+(b.win||0).toLocaleString():'-'}</span>`;
+      pageDiv.appendChild(div);
+    });
+    listEl.appendChild(pageDiv);
+    pages.push(pageDiv);
   }
 
-  // Остальные бонусы по порядку из админки
-  let activeSet = false;
-  remaining.forEach((b,i)=>{
-    const div = document.createElement('div');
-    const isActive = !b.opened && !activeSet;
-    if(isActive) activeSet = true;
-    div.className = 'item' + (isActive ? ' activeBonus' : '');
-    const nameShort = b.name.length>15 ? b.name.slice(0,15)+'…' : b.name;
-    div.innerHTML = `<span>${i+1}. ${nameShort} (${currency}${(b.cost||0).toLocaleString()})</span><span>${b.win>0 ? currency+(b.win||0).toLocaleString() : '-'}</span>`;
-    listEl.appendChild(div);
-  });
+  currentPage = 0;
+  pages.forEach(p=>p.style.opacity=0);
+  if(pages[0]) pages[0].style.opacity = 1;
+
+  // Авто-переключение страниц каждые 5 секунд
+  setInterval(()=>{
+    if(pages.length<=1) return;
+    pages[currentPage].style.opacity = 0;
+    currentPage = (currentPage+1)%pages.length;
+    pages[currentPage].style.opacity = 1;
+  },5000);
 });
 </script>
 </body>
