@@ -21,19 +21,33 @@ body{
 }
 
 .widget{
-  width:440px;
+  width:460px;
   background:linear-gradient(180deg,#3f154f 0%,#2b0f36 60%,#260c30 100%);
   border-radius:18px;
-  padding:20px;
+  padding:22px;
   color:#fff;
   border:1px solid rgba(255,255,255,.08);
 }
 
 .header{
   display:flex;
+  justify-content:space-between;
   align-items:center;
-  gap:12px;
   margin-bottom:14px;
+}
+
+.left-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.right-header{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:22px;
+  font-weight:800;
 }
 
 .emoji{
@@ -43,11 +57,6 @@ body{
 .title{
   font-size:22px;
   font-weight:800;
-}
-
-.subtitle{
-  font-size:12px;
-  opacity:.7;
 }
 
 .divider{
@@ -96,6 +105,14 @@ body{
   font-weight:800;
 }
 
+.footer-text{
+  margin-top:10px;
+  text-align:center;
+  font-size:11px;
+  opacity:.6;
+  letter-spacing:.5px;
+}
+
 </style>
 </head>
 
@@ -104,10 +121,13 @@ body{
 <div class="widget">
 
   <div class="header">
-    <div class="emoji" id="emoji">🎰</div>
-    <div>
+    <div class="left-header">
+      <div class="emoji" id="emoji">🎰</div>
       <div class="title" id="title">BONUSBUY #0</div>
-      <div class="subtitle">ubtez</div>
+    </div>
+
+    <div class="right-header">
+      UBTEZ <span>🃏</span>
     </div>
   </div>
 
@@ -122,12 +142,16 @@ body{
   <div class="divider"></div>
 
   <div class="biggest" id="biggest">
-    🏆 Самый большой выигрыш: —
+    🏆 —
   </div>
 
   <div class="divider"></div>
 
   <div class="list" id="list"></div>
+
+  <div class="footer-text">
+    ТОЛЬКО ФАРТ. ТОЛЬКО УДАЧА. ТОЛЬКО ЗАНОСЫ
+  </div>
 
 </div>
 
@@ -156,23 +180,23 @@ function render(bonuses,totalSpent,totalWin,opened,total){
   const list = document.getElementById("list");
 
   const totalPages = Math.ceil(total / perPage);
-
   const nextIndex = bonuses.findIndex(b=>!b.opened);
+
   const maxBonus = bonuses.reduce((max,b)=>
     (b.win||0) > (max.win||0) ? b : max , {win:0});
 
-  /* ----- Показываем блок самого большого ----- */
+  /* ---- Самый большой ---- */
 
   const biggestBlock = document.getElementById("biggest");
+
   if(maxBonus.win>0){
     biggestBlock.innerHTML =
-      `🏆 ${maxBonus.name} — ${format(maxBonus.win)}₽`;
+      `🏆 ${format(maxBonus.win)}₽ — ${maxBonus.name} (${format(maxBonus.cost)}₽)`;
   }else{
-    biggestBlock.innerHTML =
-      `🏆 Самый большой выигрыш: —`;
+    biggestBlock.innerHTML = `🏆 —`;
   }
 
-  /* ----- ЛОГИКА СТРАНИЦ ----- */
+  /* ---- Логика страниц ---- */
 
   if(opened !== total){
     clearInterval(interval);
@@ -195,9 +219,7 @@ function render(bonuses,totalSpent,totalWin,opened,total){
     slice.forEach((b,i)=>{
 
       const div=document.createElement("div");
-
       const globalIndex=start+i;
-
       const isCurrent = globalIndex===nextIndex;
 
       div.className="item"+(isCurrent?" current":"");
@@ -215,15 +237,12 @@ function render(bonuses,totalSpent,totalWin,opened,total){
 
   },200);
 
-  /* ----- ПЕРЕКЛЮЧЕНИЕ ТОЛЬКО ЕСЛИ ВСЕ ОТКРЫТЫ ----- */
-
   if(opened===total && totalPages>1 && !interval){
 
     interval=setInterval(()=>{
 
       currentPage++;
       if(currentPage>=totalPages) currentPage=0;
-
       render(bonuses,totalSpent,totalWin,opened,total);
 
     },6000);
