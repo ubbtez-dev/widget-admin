@@ -21,72 +21,73 @@ body{
 }
 
 .widget{
-  width:460px;
+  width:520px;
   background:linear-gradient(180deg,#3f154f 0%,#2b0f36 60%,#260c30 100%);
-  border-radius:18px;
-  padding:22px;
+  border-radius:22px;
+  padding:26px;
   color:#fff;
   border:1px solid rgba(255,255,255,.08);
 }
+
+/* HEADER */
 
 .header{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:14px;
+  margin-bottom:18px;
 }
 
 .left-header{
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:12px;
 }
 
 .right-header{
   display:flex;
   align-items:center;
-  gap:8px;
-  font-size:22px;
+  gap:10px;
+  font-size:24px;
   font-weight:800;
 }
 
 .emoji{
-  font-size:26px;
+  font-size:32px;
 }
 
 .title{
-  font-size:22px;
+  font-size:24px;
   font-weight:800;
 }
 
-.divider{
-  height:1px;
-  background:rgba(255,255,255,.15);
-  margin:12px 0;
-}
+/* EVERYTHING BELOW HEADER ×1.5 */
 
 .stats{
   display:flex;
   justify-content:space-between;
   text-align:center;
+  font-size:21px; /* 14 ×1.5 */
+  font-weight:700;
 }
 
-.stat{
-  font-size:14px;
-  font-weight:700;
+.divider{
+  height:1px;
+  background:rgba(255,255,255,.15);
+  margin:16px 0;
 }
 
 .biggest{
-  background:rgba(255,215,106,.08);
-  padding:10px;
-  border-radius:10px;
-  font-size:14px;
-  font-weight:700;
+  background:rgba(255,215,106,.10);
+  padding:16px;
+  border-radius:12px;
+  font-size:21px;
+  font-weight:800;
   color:#ffd76a;
 }
 
 .list{
-  height:320px;
+  height:360px;
   overflow:hidden;
   transition:opacity .5s ease;
 }
@@ -94,23 +95,24 @@ body{
 .item{
   display:flex;
   justify-content:space-between;
-  padding:6px 0;
-  font-size:14px;
+  padding:10px 0;
+  font-size:21px;
   font-weight:600;
   border-bottom:1px solid rgba(255,255,255,.06);
 }
 
 .current{
   color:#ffd76a;
-  font-weight:800;
+  font-weight:900;
 }
 
 .footer-text{
-  margin-top:10px;
+  margin-top:16px;
   text-align:center;
-  font-size:11px;
-  opacity:.6;
-  letter-spacing:.5px;
+  font-size:16px;
+  opacity:.7;
+  letter-spacing:1px;
+  font-weight:600;
 }
 
 </style>
@@ -134,9 +136,9 @@ body{
   <div class="divider"></div>
 
   <div class="stats">
-    <div class="stat">💰 <span id="spent">0₽</span></div>
-    <div class="stat">❌ <span id="ratio">0x</span></div>
-    <div class="stat">⭐ <span id="count">0/0</span></div>
+    <div>💰 <span id="spent">0₽</span></div>
+    <div>❌ <span id="ratio">0x</span></div>
+    <div>⭐ <span id="count">0/0</span></div>
   </div>
 
   <div class="divider"></div>
@@ -175,6 +177,13 @@ function format(n){
   return Number(n||0).toLocaleString("ru-RU");
 }
 
+/* ---- LIMIT SLOT NAME 25 CHARS ---- */
+function limitName(name){
+  if(!name) return "";
+  if(name.length <= 25) return name;
+  return name.substring(0,22) + "...";
+}
+
 function render(bonuses,totalSpent,totalWin,opened,total){
 
   const list = document.getElementById("list");
@@ -185,18 +194,18 @@ function render(bonuses,totalSpent,totalWin,opened,total){
   const maxBonus = bonuses.reduce((max,b)=>
     (b.win||0) > (max.win||0) ? b : max , {win:0});
 
-  /* ---- Самый большой ---- */
+  /* Biggest win block */
 
   const biggestBlock = document.getElementById("biggest");
 
   if(maxBonus.win>0){
     biggestBlock.innerHTML =
-      `🏆 ${format(maxBonus.win)}₽ — ${maxBonus.name} (${format(maxBonus.cost)}₽)`;
+      `🏆 ${format(maxBonus.win)}₽ — ${limitName(maxBonus.name)} (${format(maxBonus.cost)}₽)`;
   }else{
     biggestBlock.innerHTML = `🏆 —`;
   }
 
-  /* ---- Логика страниц ---- */
+  /* Page logic */
 
   if(opened !== total){
     clearInterval(interval);
@@ -225,7 +234,7 @@ function render(bonuses,totalSpent,totalWin,opened,total){
       div.className="item"+(isCurrent?" current":"");
 
       div.innerHTML=`
-        <span>${globalIndex+1}. ${b.name} (${format(b.cost)}₽)</span>
+        <span>${globalIndex+1}. ${limitName(b.name)} (${format(b.cost)}₽)</span>
         <span>${b.opened?format(b.win)+"₽":"-"}</span>
       `;
 
