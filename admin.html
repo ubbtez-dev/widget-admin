@@ -11,7 +11,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
 <style>
-/* Весь CSS оставляем без изменений, визуалка строго та же */
+/* === Визуалка админки без изменений === */
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',sans-serif;background:#0e0e11;color:#fff;display:flex;justify-content:center;padding:40px 20px;}
 .panel{width:920px;max-width:100%;background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);border-radius:20px;padding:30px;box-shadow:0 12px 40px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.06);}
@@ -36,7 +36,7 @@ input:focus, select:focus{border-color:#ffd76a;}
 </head>
 <body>
 
-<!-- Login блок -->
+<!-- === Login Panel === -->
 <div class="login-panel" id="loginPanel">
   <h2>Вход в админку</h2>
   <input type="email" id="email" placeholder="Email">
@@ -45,7 +45,7 @@ input:focus, select:focus{border-color:#ffd76a;}
   <p id="loginError" style="color:#ff4d4d;margin-top:10px;display:none;"></p>
 </div>
 
-<!-- Основная панель админки -->
+<!-- === Main Admin Panel === -->
 <div class="panel" id="adminPanel" style="display:none;">
 <h1>UBTEZ PANEL</h1>
 
@@ -103,10 +103,10 @@ input:focus, select:focus{border-color:#ffd76a;}
 
 <script>
 firebase.initializeApp({
-apiKey:"AIzaSyAvA5CAcKwuuHC2Cl8KlUbnkR9BJfp_9pw",
-authDomain:"adminwidget-b69c9.firebaseapp.com",
-databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com",
-projectId:"adminwidget-b69c9"
+  apiKey:"AIzaSyAvA5CAcKwuuHC2Cl8KlUbnkR9BJfp_9pw",
+  authDomain:"adminwidget-b69c9.firebaseapp.com",
+  databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com",
+  projectId:"adminwidget-b69c9"
 });
 
 const db = firebase.database();
@@ -117,9 +117,10 @@ const MAX_AMOUNT = 99999999;
 const MAX_BONUSES = 100;
 
 let bonuses = [];
-let currentStreamer = null; // email стримера
+let currentStreamerEmail = null;
+let currentStreamerName = null;
 
-// элементы
+// DOM elements
 const loginPanel = document.getElementById("loginPanel");
 const adminPanel = document.getElementById("adminPanel");
 const loginError = document.getElementById("loginError");
@@ -148,16 +149,22 @@ function restrict(el,max){
 
 // ---------------- LOGIN ----------------
 document.getElementById("loginBtn").onclick = () => {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
   loginError.style.display = "none";
+
+  if(!email || !password){
+    loginError.textContent = "Введите email и пароль";
+    loginError.style.display = "block";
+    return;
+  }
 
   auth.signInWithEmailAndPassword(email,password)
     .then(userCredential=>{
-      currentStreamer = email;
+      currentStreamerEmail = email;
       loginPanel.style.display="none";
       adminPanel.style.display="block";
-      initAdmin(); // запуск основной логики админки
+      initAdmin();
     })
     .catch(err=>{
       loginError.textContent = "Ошибка входа: "+err.message;
@@ -167,13 +174,12 @@ document.getElementById("loginBtn").onclick = () => {
 
 // ---------------- ADMIN LOGIC ----------------
 function initAdmin(){
-
   const streamerRef = db.ref("streamers");
 
   streamerRef.once("value").then(snap=>{
     const data = snap.val();
     // ищем имя стримера по email
-    currentStreamerName = Object.keys(data).find(k=>data[k]===currentStreamer);
+    currentStreamerName = Object.keys(data).find(k=>data[k]===currentStreamerEmail);
     if(!currentStreamerName){
       alert("Вы не зарегистрированы как стример!");
       auth.signOut();
@@ -181,22 +187,10 @@ function initAdmin(){
       return;
     }
 
-    // ссылка на ветку текущего стримера
     const ref = db.ref("events/"+currentStreamerName+"/current");
 
-    // слушаем изменения
-    ref.on("value",snap=>{
-      const data = snap.val();
-      if(!data) return;
-      bonuses = data.bonuses||[];
-      totalSpentEl.value = format(data.totalSpent||0);
-      eventNumberEl.value = data.eventNumber||0;
-      eventTypeEl.value = (data.eventType||"").toLowerCase();
-      render();
-    });
-
-    // обновление базы
-    function update(){
+    // ===== UPDATE FUNCTION =====
+    window.update = function(){
       const totalSpent = parse(totalSpentEl.value);
       const totalWin = bonuses.reduce((s,b)=>s+(b.win||0),0);
       const opened = bonuses.filter(b=>b.opened).length;
@@ -212,8 +206,9 @@ function initAdmin(){
         totalSpent,
         bonuses
       });
-    }
+    };
 
+    // ===== RENDER FUNCTION =====
     function render(){
       bonusListEl.innerHTML="";
       limitWarning.style.display = bonuses.length>=MAX_BONUSES ? "block" : "none";
@@ -252,6 +247,7 @@ function initAdmin(){
       update();
     }
 
+    // ===== INITIALIZE BUTTONS =====
     restrict(eventNumberEl,MAX_EVENT);
     restrict(totalSpentEl,MAX_AMOUNT);
 
@@ -266,6 +262,16 @@ function initAdmin(){
       render();
     };
 
+    // ===== INITIAL DATA FETCH =====
+    ref.on("value",snap=>{
+      const data = snap.val();
+      if(!data) return;
+      bonuses = data.bonuses||[];
+      totalSpentEl.value = format(data.totalSpent||0);
+      eventNumberEl.value = data.eventNumber||0;
+      eventTypeEl.value = (data.eventType||"").toLowerCase();
+      render();
+    });
   });
 }
 </script>
