@@ -29,29 +29,13 @@ input:focus, select:focus{border-color:#ffd76a;}
 .delete-slot{cursor:pointer;font-weight:700;color:#ff4d4d;text-align:center;}
 .limit-warning{text-align:center;color:#ff4d4d;font-size:13px;margin-top:10px;}
 .bonus-item.dragging{opacity:0.5;}
-
-/* LOGIN STYLES */
-#loginBox {width:360px; background:#2b0f36; padding:30px; border-radius:16px; display:flex; flex-direction:column; align-items:center;}
-#loginBox input {margin:8px 0;}
-#errorMsg {color:#ff4d4d; margin-top:8px; font-size:13px; text-align:center;}
-#loginBtn {width:220px; padding:12px 0; font-size:16px; font-weight:800; margin-top:12px; border-radius:12px; background:linear-gradient(180deg,#ffd76a,#ffb347); cursor:pointer;}
-#loginBtn:hover {transform:scale(1.05);}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginBox">
-  <h2>ВХОД</h2>
-  <input type="email" id="loginEmail" placeholder="ПОЧТА">
-  <input type="password" id="loginPass" placeholder="ПАРОЛЬ">
-  <button id="loginBtn">ВОЙТИ</button>
-  <div id="errorMsg"></div>
-</div>
+<div class="panel">
 
-<!-- PANEL -->
-<div class="panel" id="adminPanel" style="display:none;">
 <h1>WIDGET PANEL</h1>
 
 <div class="section">
@@ -103,60 +87,17 @@ input:focus, select:focus{border-color:#ffd76a;}
 
 <div class="bonus-list" id="bonusList"></div>
 </div>
+
 </div>
 
 <script>
 firebase.initializeApp({
-  apiKey:"AIzaSyAvA5CAcKwuuHC2Cl8KlUbnkR9BJfp_9pw",
-  databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com"
+apiKey:"AIzaSyAvA5CAcKwuuHC2Cl8KlUbnkR9BJfp_9pw",
+databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com"
 });
 
 const db = firebase.database();
 
-// LOGIN
-const loginBox = document.getElementById("loginBox");
-const loginBtn = document.getElementById("loginBtn");
-const loginEmail = document.getElementById("loginEmail");
-const loginPass = document.getElementById("loginPass");
-const errorMsg = document.getElementById("errorMsg");
-const adminPanel = document.getElementById("adminPanel");
-
-let streamerNick = "";
-
-loginBtn.onclick = () => {
-  const email = loginEmail.value.trim();
-  const pass = loginPass.value.trim();
-  errorMsg.textContent = "";
-  if(!email || !pass){ errorMsg.textContent="Введите почту и пароль"; return; }
-
-  db.ref("AuthenticationUsers").once("value").then(snap=>{
-    const users = snap.val();
-    const entry = Object.entries(users).find(([nick,u])=> u.email===email && u.pass===pass);
-    if(!entry){
-      errorMsg.textContent="Неправильная почта или пароль";
-      return;
-    }
-    streamerNick = entry[0];
-    loginBox.style.display="none";
-    adminPanel.style.display="block";
-
-    // Загружаем данные стримера
-    db.ref(`events/${streamerNick}/current`).once("value").then(snap=>{
-      const data = snap.val();
-      if(data){
-        eventTypeEl.value = data.eventType || "";
-        eventNumberEl.value = data.eventNumber || "";
-        totalSpentEl.value = data.totalSpent ? parseInt(data.totalSpent).toLocaleString("ru-RU") : "";
-        bonuses = data.bonuses || [];
-        render();
-      }
-    });
-  });
-};
-
-// =========================================
-// ТВОЙ СУЩЕСТВУЮЩИЙ КОД ПАНЕЛИ
-// =========================================
 const MAX_EVENT = 999;
 const MAX_AMOUNT = 99999999;
 const MAX_BONUSES = 100;
@@ -195,10 +136,10 @@ function update(){
   ratioEl.value = totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+"x" : "";
   bonusCountEl.value = opened+" / "+bonuses.length;
 
-  db.ref(`events/${streamerNick}/current`).set({
+  db.ref("events/ubtez_current").set({
     eventType:eventTypeEl.value,
     eventNumber:parse(eventNumberEl.value),
-    streamerName:streamerNick,
+    streamerName:"ubtez",
     totalSpent,
     bonuses
   });
@@ -283,5 +224,6 @@ document.getElementById("clearSlotsBtn").onclick=()=>{
 
 render();
 </script>
+
 </body>
 </html>
