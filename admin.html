@@ -16,7 +16,7 @@ body{font-family:'Inter',sans-serif;background:#0e0e11;color:#fff;display:flex;j
 .panel{width:920px;max-width:100%;background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);border-radius:20px;padding:30px;box-shadow:0 12px 40px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.06);}
 h1{font-size:28px;font-weight:800;margin-bottom:25px;text-align:center;}
 .section{margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,.08);}
-label{display:block;font-size:14px;font-weight:600;margin-bottom:8px;text-align:center;}
+label{display:block;font-size:14px;font-weight:600;margin-bottom:8px;text-align:left;}
 
 input, select{
 padding:10px 14px;
@@ -99,7 +99,6 @@ font-size:14px;
 
 <body>
 
-<!-- LOGIN -->
 <div id="loginScreen">
 <h1>ВХОД</h1>
 
@@ -114,7 +113,6 @@ font-size:14px;
 <div class="error" id="loginError"></div>
 </div>
 
-<!-- PANEL -->
 <div class="panel" id="adminPanel" style="display:none;">
 
 <h1>UBTEZ PANEL</h1>
@@ -137,17 +135,17 @@ font-size:14px;
 </div>
 
 <div class="section">
-<label>Общая сумма трат</label>
+<label>Общий депозит на событие (введи)</label>
 <div class="input-row">
 <input type="text" id="totalSpent">
 </div>
 
-<label style="margin-top:15px;">Общая сумма выигрыша (авто)</label>
+<label style="margin-top:15px;">Общий выигрыш с события (авто)</label>
 <div class="input-row">
 <input type="text" id="totalWin" disabled>
 </div>
 
-<label style="margin-top:15px;">Окупаемость</label>
+<label style="margin-top:15px;">Множитель окупаемости события (авто)</label>
 <div class="input-row">
 <input type="text" id="ratio" disabled>
 </div>
@@ -183,7 +181,8 @@ projectId:"adminwidget-b69c9"
 const db = firebase.database();
 const auth = firebase.auth();
 
-/* LOGIN LOGIC */
+/* FIX AUTO LOGIN */
+auth.signOut();
 
 const loginScreen = document.getElementById("loginScreen");
 const adminPanel = document.getElementById("adminPanel");
@@ -210,10 +209,13 @@ auth.onAuthStateChanged(user=>{
 if(user){
 loginScreen.style.display="none";
 adminPanel.style.display="block";
+}else{
+loginScreen.style.display="block";
+adminPanel.style.display="none";
 }
 });
 
-/* =================== ТВОЙ ОРИГИНАЛЬНЫЙ КОД НИЖЕ БЕЗ ИЗМЕНЕНИЙ =================== */
+/* ТВОЙ ОРИГИНАЛЬНЫЙ КОД ДАЛЬШЕ БЕЗ ИЗМЕНЕНИЙ */
 
 const MAX_EVENT = 999;
 const MAX_AMOUNT = 99999999;
