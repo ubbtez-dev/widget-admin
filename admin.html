@@ -11,7 +11,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
 <style>
-/* === Визуалка админки без изменений === */
+/* === Визуалка без изменений === */
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',sans-serif;background:#0e0e11;color:#fff;display:flex;justify-content:center;padding:40px 20px;}
 .panel{width:920px;max-width:100%;background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);border-radius:20px;padding:30px;box-shadow:0 12px 40px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.06);}
@@ -38,10 +38,10 @@ input:focus, select:focus{border-color:#ffd76a;}
 
 <!-- === Login Panel === -->
 <div class="login-panel" id="loginPanel">
-  <h2>Вход в админку</h2>
+  <h2>ВХОД</h2>
   <input type="email" id="email" placeholder="Email">
   <input type="password" id="password" placeholder="Пароль">
-  <button class="button" id="loginBtn">Войти</button>
+  <button class="button" id="loginBtn">ВХОД</button>
   <p id="loginError" style="color:#ff4d4d;margin-top:10px;display:none;"></p>
 </div>
 
@@ -117,8 +117,7 @@ const MAX_AMOUNT = 99999999;
 const MAX_BONUSES = 100;
 
 let bonuses = [];
-let currentStreamerEmail = null;
-let currentStreamerName = null;
+let currentStreamer = "ubtez"; // по умолчанию для теста, заменяем после логина
 
 // DOM elements
 const loginPanel = document.getElementById("loginPanel");
@@ -161,9 +160,10 @@ document.getElementById("loginBtn").onclick = () => {
 
   auth.signInWithEmailAndPassword(email,password)
     .then(userCredential=>{
-      currentStreamerEmail = email;
       loginPanel.style.display="none";
       adminPanel.style.display="block";
+      // определяем имя стримера по email
+      currentStreamer = email.split("@")[0]; // простой способ, соответствующий базе
       initAdmin();
     })
     .catch(err=>{
@@ -174,50 +174,35 @@ document.getElementById("loginBtn").onclick = () => {
 
 // ---------------- ADMIN LOGIC ----------------
 function initAdmin(){
-  const streamerRef = db.ref("streamers");
+  const ref = db.ref("events/"+currentStreamer+"/current");
 
-  streamerRef.once("value").then(snap=>{
-    const data = snap.val();
-    // ищем имя стримера по email
-    currentStreamerName = Object.keys(data).find(k=>data[k]===currentStreamerEmail);
-    if(!currentStreamerName){
-      alert("Вы не зарегистрированы как стример!");
-      auth.signOut();
-      location.reload();
-      return;
-    }
+  function update(){
+    const totalSpent = parse(totalSpentEl.value);
+    const totalWin = bonuses.reduce((s,b)=>s+(b.win||0),0);
+    const opened = bonuses.filter(b=>b.opened).length;
 
-    const ref = db.ref("events/"+currentStreamerName+"/current");
+    totalWinEl.value = format(totalWin);
+    ratioEl.value = totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+"x" : "";
+    bonusCountEl.value = opened+" / "+bonuses.length;
 
-    // ===== UPDATE FUNCTION =====
-    window.update = function(){
-      const totalSpent = parse(totalSpentEl.value);
-      const totalWin = bonuses.reduce((s,b)=>s+(b.win||0),0);
-      const opened = bonuses.filter(b=>b.opened).length;
+    ref.set({
+      eventType:eventTypeEl.value,
+      eventNumber:parse(eventNumberEl.value),
+      streamerName:currentStreamer,
+      totalSpent,
+      bonuses
+    });
+  }
 
-      totalWinEl.value = format(totalWin);
-      ratioEl.value = totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+"x" : "";
-      bonusCountEl.value = opened+" / "+bonuses.length;
+  function render(){
+    bonusListEl.innerHTML="";
+    limitWarning.style.display = bonuses.length>=MAX_BONUSES ? "block" : "none";
 
-      ref.set({
-        eventType:eventTypeEl.value,
-        eventNumber:parse(eventNumberEl.value),
-        streamerName:currentStreamerName,
-        totalSpent,
-        bonuses
-      });
-    };
+    bonuses.forEach((b,i)=>{
+      const div = document.createElement("div");
+      div.className="bonus-item"+(b.opened?" opened":"");
 
-    // ===== RENDER FUNCTION =====
-    function render(){
-      bonusListEl.innerHTML="";
-      limitWarning.style.display = bonuses.length>=MAX_BONUSES ? "block" : "none";
-
-      bonuses.forEach((b,i)=>{
-        const div = document.createElement("div");
-        div.className="bonus-item"+(b.opened?" opened":"");
-
-        div.innerHTML=`
+      div.innerHTML=`
         <div style="color:#ffd76a;font-weight:700;">${i+1}</div>
         <div>
         <input type="text" placeholder="Название" value="${b.name||""}" ${b.opened?"disabled":""} style="width:100%;margin-bottom:6px;">
@@ -226,54 +211,52 @@ function initAdmin(){
         <button class="button button-small" style="margin-top:6px;width:100%;">${b.opened?"ОТКРЫТ":"ЗАКРЫТ"}</button>
         </div>
         <div class="delete-slot">🗑</div>
-        `;
+      `;
 
-        const inputs = div.querySelectorAll("input");
-        const btn = div.querySelector("button");
-        const del = div.querySelector(".delete-slot");
+      const inputs = div.querySelectorAll("input");
+      const btn = div.querySelector("button");
+      const del = div.querySelector(".delete-slot");
 
-        restrict(inputs[1],MAX_AMOUNT);
-        restrict(inputs[2],MAX_AMOUNT);
+      restrict(inputs[1],MAX_AMOUNT);
+      restrict(inputs[2],MAX_AMOUNT);
 
-        inputs[0].oninput=e=>{b.name=e.target.value;update();}
-        inputs[1].oninput=e=>{b.cost=parse(e.target.value);update();}
-        inputs[2].oninput=e=>{b.win=parse(e.target.value);update();}
-        btn.onclick=()=>{b.opened=!b.opened;render();}
-        del.onclick=()=>{bonuses.splice(i,1);render();}
+      inputs[0].oninput=e=>{b.name=e.target.value;update();}
+      inputs[1].oninput=e=>{b.cost=parse(e.target.value);update();}
+      inputs[2].oninput=e=>{b.win=parse(e.target.value);update();}
+      btn.onclick=()=>{b.opened=!b.opened;render();}
+      del.onclick=()=>{bonuses.splice(i,1);render();}
 
-        bonusListEl.appendChild(div);
-      });
-
-      update();
-    }
-
-    // ===== INITIALIZE BUTTONS =====
-    restrict(eventNumberEl,MAX_EVENT);
-    restrict(totalSpentEl,MAX_AMOUNT);
-
-    document.getElementById("addBonusBtn").onclick=()=>{
-      if(bonuses.length>=MAX_BONUSES) return;
-      bonuses.push({name:"",cost:0,win:0,opened:false});
-      render();
-    };
-
-    document.getElementById("clearSlotsBtn").onclick=()=>{
-      bonuses=[];
-      render();
-    };
-
-    // ===== INITIAL DATA FETCH =====
-    ref.on("value",snap=>{
-      const data = snap.val();
-      if(!data) return;
-      bonuses = data.bonuses||[];
-      totalSpentEl.value = format(data.totalSpent||0);
-      eventNumberEl.value = data.eventNumber||0;
-      eventTypeEl.value = (data.eventType||"").toLowerCase();
-      render();
+      bonusListEl.appendChild(div);
     });
+
+    update();
+  }
+
+  restrict(eventNumberEl,MAX_EVENT);
+  restrict(totalSpentEl,MAX_AMOUNT);
+
+  document.getElementById("addBonusBtn").onclick=()=>{
+    if(bonuses.length>=MAX_BONUSES) return;
+    bonuses.push({name:"",cost:0,win:0,opened:false});
+    render();
+  };
+
+  document.getElementById("clearSlotsBtn").onclick=()=>{
+    bonuses=[];
+    render();
+  };
+
+  ref.on("value",snap=>{
+    const data = snap.val();
+    if(!data) return;
+    bonuses = data.bonuses||[];
+    totalSpentEl.value = format(data.totalSpent||0);
+    eventNumberEl.value = data.eventNumber||0;
+    eventTypeEl.value = (data.eventType||"").toLowerCase();
+    render();
   });
 }
 </script>
+
 </body>
 </html>
