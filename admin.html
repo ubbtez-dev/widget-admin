@@ -7,7 +7,6 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <style>
@@ -107,14 +106,11 @@ input:focus, select:focus{border-color:#ffd76a;}
 </div>
 
 <script>
-// Firebase init
 firebase.initializeApp({
   apiKey:"AIzaSyAvA5CAcKwuuHC2Cl8KlUbnkR9BJfp_9pw",
-  authDomain:"adminwidget-b69c9.firebaseapp.com",
   databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com"
 });
 
-const auth = firebase.auth();
 const db = firebase.database();
 
 // LOGIN
@@ -128,45 +124,34 @@ const adminPanel = document.getElementById("adminPanel");
 let streamerNick = "";
 
 loginBtn.onclick = () => {
-  errorMsg.textContent = "";
   const email = loginEmail.value.trim();
-  const password = loginPass.value;
-  if(!email || !password){ errorMsg.textContent="Введите почту и пароль"; return; }
+  const pass = loginPass.value.trim();
+  errorMsg.textContent = "";
+  if(!email || !pass){ errorMsg.textContent="Введите почту и пароль"; return; }
 
-  auth.signInWithEmailAndPassword(email, password)
-    .then(userCredential=>{
-      const userEmail = userCredential.user.email;
-
-      db.ref("streamers").once("value").then(snap=>{
-        const streamers = snap.val();
-        const entry = Object.entries(streamers).find(([nick, e])=> e===userEmail);
-        if(!entry){
-          errorMsg.textContent="Нет доступа к админке для этой почты";
-          auth.signOut();
-          return;
-        }
-        streamerNick = entry[0];
-
-        loginBox.style.display="none";
-        adminPanel.style.display="block";
-
-        // Загружаем данные стримера
-        db.ref(`events/${streamerNick}/current`).once("value").then(snap=>{
-          const data = snap.val();
-          if(data){
-            eventTypeEl.value = data.eventType || "";
-            eventNumberEl.value = data.eventNumber || "";
-            totalSpentEl.value = data.totalSpent ? parseInt(data.totalSpent).toLocaleString("ru-RU") : "";
-            bonuses = data.bonuses || [];
-            render();
-          }
-        });
-      });
-    })
-    .catch(err=>{
-      console.log(err);
+  db.ref("AuthenticationUsers").once("value").then(snap=>{
+    const users = snap.val();
+    const entry = Object.entries(users).find(([nick,u])=> u.email===email && u.pass===pass);
+    if(!entry){
       errorMsg.textContent="Неправильная почта или пароль";
+      return;
+    }
+    streamerNick = entry[0];
+    loginBox.style.display="none";
+    adminPanel.style.display="block";
+
+    // Загружаем данные стримера
+    db.ref(`events/${streamerNick}/current`).once("value").then(snap=>{
+      const data = snap.val();
+      if(data){
+        eventTypeEl.value = data.eventType || "";
+        eventNumberEl.value = data.eventNumber || "";
+        totalSpentEl.value = data.totalSpent ? parseInt(data.totalSpent).toLocaleString("ru-RU") : "";
+        bonuses = data.bonuses || [];
+        render();
+      }
     });
+  });
 };
 
 // =========================================
