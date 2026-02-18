@@ -6,13 +6,21 @@
 <title>WIDGET PANEL</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',sans-serif;background:#0e0e11;color:#fff;display:flex;justify-content:center;padding:40px 20px;}
-.panel{width:920px;max-width:100%;background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);border-radius:20px;padding:30px;box-shadow:0 12px 40px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.06);}
+.auth-panel{width:400px;max-width:100%;text-align:center;}
+.auth-panel input{width:100%;padding:10px;margin:5px 0;border-radius:8px;border:1px solid #555;background:#1a1221;color:#fff;}
+.auth-panel button{margin-top:10px;width:100%;padding:10px;border-radius:12px;background:linear-gradient(180deg,#ffd76a,#ffb347);font-weight:700;cursor:pointer;}
+.auth-panel button:hover{transform:scale(1.05);}
+.auth-error{color:#ff4d4d;margin-top:10px;}
+.panel{width:920px;max-width:100%;background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);border-radius:20px;padding:30px;box-shadow:0 12px 40px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.06); display:none;}
 h1{font-size:28px;font-weight:800;margin-bottom:25px;text-align:left;}
 .section{margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,.08);}
 label{display:block;font-size:14px;font-weight:600;margin-bottom:8px;text-align:left;}
@@ -34,8 +42,17 @@ input:focus, select:focus{border-color:#ffd76a;}
 
 <body>
 
-<div class="panel">
+<!-- Авторизация -->
+<div class="auth-panel" id="authPanel">
+  <h2>Вход в админку</h2>
+  <input type="email" id="authEmail" placeholder="Email">
+  <input type="password" id="authPass" placeholder="Пароль">
+  <button id="loginBtn">Войти</button>
+  <div class="auth-error" id="authError"></div>
+</div>
 
+<!-- Панель виджета -->
+<div class="panel" id="widgetPanel">
 <h1>WIDGET PANEL</h1>
 
 <div class="section">
@@ -87,7 +104,6 @@ input:focus, select:focus{border-color:#ffd76a;}
 
 <div class="bonus-list" id="bonusList"></div>
 </div>
-
 </div>
 
 <script>
@@ -97,12 +113,21 @@ databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com"
 });
 
 const db = firebase.database();
+const auth = firebase.auth();
 
 const MAX_EVENT = 999;
 const MAX_AMOUNT = 99999999;
 const MAX_BONUSES = 100;
 
 let bonuses = [];
+let streamerKey = null; // путь к events/<streamer>
+
+const authPanel = document.getElementById("authPanel");
+const authEmail = document.getElementById("authEmail");
+const authPass = document.getElementById("authPass");
+const loginBtn = document.getElementById("loginBtn");
+const authError = document.getElementById("authError");
+const widgetPanel = document.getElementById("widgetPanel");
 
 const eventNumberEl = document.getElementById("eventNumber");
 const eventTypeEl = document.getElementById("eventType");
@@ -113,9 +138,9 @@ const bonusCountEl = document.getElementById("bonusCount");
 const bonusListEl = document.getElementById("bonusList");
 const limitWarning = document.getElementById("limitWarning");
 
+// === Вспомогательные функции ===
 function format(n){return Number(n||0).toLocaleString("ru-RU");}
 function parse(v){return parseInt(v.replace(/\s/g,""))||0;}
-
 function restrict(el,max){
   el.addEventListener("input",e=>{
     let val = e.target.value.replace(/[^0-9]/g,"");
@@ -127,7 +152,61 @@ function restrict(el,max){
   });
 }
 
+// === Авторизация ===
+loginBtn.onclick = () => {
+  authError.textContent = "";
+  auth.signInWithEmailAndPassword(authEmail.value, authPass.value)
+  .then(userCredential => {
+    const user = userCredential.user;
+    // находим ключ стримера по email
+    db.ref('streamers').once('value').then(snapshot=>{
+      const data = snapshot.val();
+      for(const key in data){
+        if(data[key] === user.email){
+          streamerKey = key;
+          break;
+        }
+      }
+      if(!streamerKey){
+        auth.signOut();
+        authError.textContent = "Ваш email не найден в списке стримеров";
+        return;
+      }
+      authPanel.style.display = "none";
+      widgetPanel.style.display = "block";
+      render();
+    });
+  })
+  .catch(err=>{
+    authError.textContent = err.message;
+  });
+};
+
+// === Автоматическая проверка авторизации ===
+auth.onAuthStateChanged(user=>{
+  if(user){
+    db.ref('streamers').once('value').then(snapshot=>{
+      const data = snapshot.val();
+      for(const key in data){
+        if(data[key] === user.email){
+          streamerKey = key;
+          break;
+        }
+      }
+      if(streamerKey){
+        authPanel.style.display = "none";
+        widgetPanel.style.display = "block";
+        render();
+      } else {
+        auth.signOut();
+      }
+    });
+  }
+});
+
+// === Обновление данных в Firebase ===
 function update(){
+  if(!streamerKey) return;
   const totalSpent = parse(totalSpentEl.value);
   const totalWin = bonuses.reduce((s,b)=>s+(b.win||0),0);
   const opened = bonuses.filter(b=>b.opened).length;
@@ -136,16 +215,18 @@ function update(){
   ratioEl.value = totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+"x" : "";
   bonusCountEl.value = opened+" / "+bonuses.length;
 
-  db.ref("events/ubtez_current").set({
+  db.ref("events/"+streamerKey+"/current").set({
     eventType:eventTypeEl.value,
     eventNumber:parse(eventNumberEl.value),
-    streamerName:"ubtez",
+    streamerName:streamerKey,
     totalSpent,
     bonuses
   });
 }
 
+// === Рендер бонусов ===
 function render(){
+  if(!streamerKey) return;
   bonusListEl.innerHTML="";
   limitWarning.style.display = bonuses.length>=MAX_BONUSES ? "block" : "none";
 
@@ -164,7 +245,6 @@ function render(){
 </div>
 <div class="delete-slot">🗑</div>
 `;
-
     const inputs = div.querySelectorAll("input");
     const btn = div.querySelector("button");
     const del = div.querySelector(".delete-slot");
@@ -176,15 +256,14 @@ function render(){
     inputs[1].oninput=e=>{b.cost=parse(e.target.value);update();}
     inputs[2].oninput=e=>{b.win=parse(e.target.value);update();}
 
-    btn.onclick=()=>{b.opened=!b.opened;render();}
-    del.onclick=()=>{bonuses.splice(i,1);render();}
+    btn.onclick=()=>{b.opened=!b.opened;render(); update();}
+    del.onclick=()=>{bonuses.splice(i,1);render(); update();}
 
     bonusListEl.appendChild(div);
   });
 
   // Drag & Drop
   let dragSrcEl = null;
-
   const items = document.querySelectorAll('.bonus-item');
   items.forEach(item=>{
     item.addEventListener('dragstart', e=>{
@@ -208,9 +287,11 @@ function render(){
   update();
 }
 
+// === Ограничение вводимых чисел ===
 restrict(eventNumberEl,MAX_EVENT);
 restrict(totalSpentEl,MAX_AMOUNT);
 
+// === Добавление / очистка бонусов ===
 document.getElementById("addBonusBtn").onclick=()=>{
   if(bonuses.length>=MAX_BONUSES) return;
   bonuses.push({name:"",cost:0,win:0,opened:false});
@@ -222,7 +303,6 @@ document.getElementById("clearSlotsBtn").onclick=()=>{
   render();
 };
 
-render();
 </script>
 
 </body>
