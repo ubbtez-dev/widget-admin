@@ -31,10 +31,12 @@ input:focus, select:focus{border-color:#ffd76a;}
 .limit-warning{text-align:center;color:#ff4d4d;font-size:13px;margin-top:10px;}
 .bonus-item.dragging{opacity:0.5;}
 
-/* Авторизация */
+/* LOGIN */
 #loginBox {width:360px; background:#2b0f36; padding:30px; border-radius:16px; display:flex; flex-direction:column; align-items:center;}
 #loginBox input {margin:8px 0;}
-#errorMsg {color:#ff4d4d; margin-top:6px; font-size:13px;}
+#errorMsg {color:#ff4d4d; margin-top:8px; font-size:13px;}
+#loginBtn {width:220px; padding:12px 0; font-size:16px; font-weight:800; margin-top:12px; border-radius:12px; background:linear-gradient(180deg,#ffd76a,#ffb347); cursor:pointer;}
+#loginBtn:hover {transform:scale(1.05);}
 </style>
 </head>
 
@@ -114,7 +116,7 @@ databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com"
 const auth = firebase.auth();
 const db = firebase.database();
 
-// Элементы
+// LOGIN
 const loginBox = document.getElementById("loginBox");
 const loginBtn = document.getElementById("loginBtn");
 const loginEmail = document.getElementById("loginEmail");
@@ -122,7 +124,7 @@ const loginPass = document.getElementById("loginPass");
 const errorMsg = document.getElementById("errorMsg");
 const adminPanel = document.getElementById("adminPanel");
 
-let streamerNick = ""; // ник после логина
+let streamerNick = ""; 
 
 loginBtn.onclick = () => {
   errorMsg.textContent = "";
@@ -148,7 +150,7 @@ loginBtn.onclick = () => {
         loginBox.style.display="none";
         adminPanel.style.display="block";
 
-        // грузим данные стримера вместо hardcoded
+        // грузим данные стримера
         db.ref(`events/${streamerNick}/current`).once("value").then(snap=>{
           const data = snap.val();
           if(data){
@@ -162,12 +164,13 @@ loginBtn.onclick = () => {
       });
     })
     .catch(err=>{
+      console.log(err);
       errorMsg.textContent="Неправильная почта или пароль";
     });
 };
 
 // =========================================
-// ТВОЙ СУЩЕСТВУЮЩИЙ КОД ПАНЕЛИ (НЕ МЕНЯЕМ)
+// ТВОЙ СУЩЕСТВУЮЩИЙ КОД ПАНЕЛИ
 // =========================================
 const MAX_EVENT = 999;
 const MAX_AMOUNT = 99999999;
