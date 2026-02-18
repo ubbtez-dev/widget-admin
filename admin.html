@@ -92,8 +92,8 @@ input:focus, select:focus{border-color:#ffd76a;}
 
 <script>
 firebase.initializeApp({
-apiKey:"AIzaSyAvA5CAcKwuuHC2Cl8KlUbnkR9BJfp_9pw",
-databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com"
+  apiKey:"AIzaSyAvA5CAcKwuuHC2Cl8KlUbnkR9BJfp_9pw",
+  databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com"
 });
 
 const db = firebase.database();
@@ -112,6 +112,9 @@ const ratioEl = document.getElementById("ratio");
 const bonusCountEl = document.getElementById("bonusCount");
 const bonusListEl = document.getElementById("bonusList");
 const limitWarning = document.getElementById("limitWarning");
+
+// путь к текущему стримеру
+const streamerKey = "ubtez"; // <-- меняешь на нужного стримера для другой админки
 
 function format(n){return Number(n||0).toLocaleString("ru-RU");}
 function parse(v){return parseInt(v.replace(/\s/g,""))||0;}
@@ -136,10 +139,10 @@ function update(){
   ratioEl.value = totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+"x" : "";
   bonusCountEl.value = opened+" / "+bonuses.length;
 
-  db.ref("events/ubtez_current").set({
+  db.ref("events/"+streamerKey).set({
     eventType:eventTypeEl.value,
     eventNumber:parse(eventNumberEl.value),
-    streamerName:"ubtez",
+    streamerName:streamerKey,
     totalSpent,
     bonuses
   });
