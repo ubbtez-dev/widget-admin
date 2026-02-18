@@ -11,7 +11,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
 <style>
-/* --- Стили оставлены без изменений --- */
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',sans-serif;background:#0e0e11;color:#fff;display:flex;justify-content:center;padding:40px 20px;}
 .panel{width:920px;max-width:100%;background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);border-radius:20px;padding:30px;box-shadow:0 12px 40px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.06);}
@@ -146,41 +145,41 @@ const loginError = document.getElementById("loginError");
 
 let currentStreamerNick = null;
 
-loginBtn.onclick = async () => {
+loginBtn.onclick = () => {
   const email = document.getElementById("loginEmail").value.trim().toLowerCase();
   const password = document.getElementById("loginPassword").value.trim();
   loginError.textContent = "";
 
-  try {
-    await auth.signInWithEmailAndPassword(email,password);
-    const snapshot = await db.ref("streamers").once("value");
-    const streamers = snapshot.val() || {};
+  auth.signInWithEmailAndPassword(email,password)
+    .then(() => {
+      db.ref("streamers").once("value")
+        .then(snapshot=>{
+          const streamers = snapshot.val() || {};
+          const nick = Object.keys(streamers).find(n => (streamers[n]||"").trim().toLowerCase() === email);
+          if(!nick){
+            loginError.textContent="Email не найден в базе!";
+            auth.signOut();
+            return;
+          }
+          currentStreamerNick = nick;
+          loginScreen.style.display="none";
+          adminPanel.style.display="block";
 
-    // ищем ник по email (lowercase)
-    const nick = Object.keys(streamers).find(n => (streamers[n] || "").trim().toLowerCase() === email);
-
-    if(!nick){
-      loginError.textContent="Email не найден в базе!";
-      auth.signOut();
-      return;
-    }
-
-    currentStreamerNick = nick;
-    loginScreen.style.display="none";
-    adminPanel.style.display="block";
-
-    // загружаем данные стримера
-    const dataSnap = await db.ref(`events/${currentStreamerNick}/current`).once("value");
-    const data = dataSnap.val() || {};
-    if(data.eventType) document.getElementById("eventType").value = data.eventType;
-    if(data.eventNumber) document.getElementById("eventNumber").value = data.eventNumber;
-    if(data.totalSpent) document.getElementById("totalSpent").value = data.totalSpent;
-    if(data.bonuses) bonuses = data.bonuses;
-    render();
-
-  } catch(err){
-    loginError.textContent="Неправильная почта или пароль!";
-  }
+          db.ref(`events/${currentStreamerNick}/current`).once("value")
+            .then(dataSnap=>{
+              const data = dataSnap.val() || {};
+              if(data.eventType) document.getElementById("eventType").value = data.eventType;
+              if(data.eventNumber) document.getElementById("eventNumber").value = data.eventNumber;
+              if(data.totalSpent) document.getElementById("totalSpent").value = data.totalSpent;
+              if(data.bonuses) bonuses = data.bonuses;
+              render();
+            });
+        });
+    })
+    .catch(err => {
+      loginError.textContent="Неправильная почта или пароль!";
+      console.error(err);
+    });
 });
 
 auth.onAuthStateChanged(user=>{
@@ -188,7 +187,7 @@ auth.onAuthStateChanged(user=>{
     if(!currentStreamerNick){
       db.ref("streamers").once("value").then(snapshot=>{
         const streamers = snapshot.val() || {};
-        const nick = Object.keys(streamers).find(n => (streamers[n] || "").trim().toLowerCase() === user.email.trim().toLowerCase());
+        const nick = Object.keys(streamers).find(n => (streamers[n]||"").trim().toLowerCase() === user.email.trim().toLowerCase());
         if(!nick){
           auth.signOut();
         } else {
@@ -207,7 +206,7 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-/* === Далее твой оригинальный код без изменений === */
+/* === ОРИГИНАЛЬНЫЙ КОД ТВОЕЙ АДМИНКИ === */
 
 const MAX_EVENT = 999;
 const MAX_AMOUNT = 99999999;
