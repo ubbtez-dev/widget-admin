@@ -13,7 +13,7 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',sans-serif;background:#0e0e11;color:#fff;display:flex;justify-content:center;padding:40px 20px;}
 .panel{width:920px;max-width:100%;background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);border-radius:20px;padding:30px;box-shadow:0 12px 40px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.06);}
-h1{font-size:28px;font-weight:800;margin-bottom:25px;text-align:center;}
+h1{font-size:28px;font-weight:800;margin-bottom:25px;text-align:left;}
 .section{margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,.08);}
 label{display:block;font-size:14px;font-weight:600;margin-bottom:8px;text-align:left;}
 
@@ -32,16 +32,7 @@ width:100%;
 input:focus, select:focus{border-color:#ffd76a;}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;}
 .input-row{display:flex;width:100%;}
-.button{
-background:linear-gradient(180deg,#ffd76a,#ffb347);
-border:none;
-padding:10px 14px;
-border-radius:12px;
-font-weight:700;
-cursor:pointer;
-margin-top:10px;
-transition:transform .15s ease;
-}
+.button{background:linear-gradient(180deg,#ffd76a,#ffb347);border:none;padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer;margin-top:10px;transition:transform .15s ease;}
 .button:hover{transform:scale(1.05);}
 .button-small{padding:6px 10px;font-size:12px;}
 .bonus-list{margin-top:20px;}
@@ -49,29 +40,14 @@ transition:transform .15s ease;
 .bonus-item.opened{opacity:.5;}
 .delete-slot{cursor:pointer;font-weight:700;color:#ff4d4d;text-align:center;}
 .limit-warning{text-align:center;color:#ff4d4d;font-size:13px;margin-top:10px;}
-#loginScreen{width:420px;max-width:100%;background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);border-radius:20px;padding:30px;box-shadow:0 12px 40px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.06);}
-.error{color:#ff4d4d;text-align:center;margin-top:10px;font-size:14px;}
 </style>
 </head>
 
 <body>
 
-<div id="loginScreen">
-<h1>ВХОД</h1>
+<div class="panel">
 
-<label>Почта</label>
-<input type="email" id="loginEmail">
-
-<label style="margin-top:15px;">Пароль</label>
-<input type="password" id="loginPassword">
-
-<button class="button" style="width:100%;" id="loginBtn">Войти</button>
-
-<div class="error" id="loginError"></div>
-</div>
-
-<div class="panel" id="adminPanel" style="display:none;">
-<h1 style="text-align:left;">WIDGET PANEL</h1>
+<h1>WIDGET PANEL</h1>
 
 <div class="section">
 <div class="row">
@@ -133,57 +109,6 @@ databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com"
 
 const db = firebase.database();
 
-const loginScreen = document.getElementById("loginScreen");
-const adminPanel = document.getElementById("adminPanel");
-const loginBtn = document.getElementById("loginBtn");
-const loginError = document.getElementById("loginError");
-
-let currentStreamerNick = null;
-
-// --- Ручная авторизация: email + пароль ---
-const authorizedUsers = {
-  "ubtez@gmail.com": {nick:"ubtez", password:"test123"},
-  "nick1@gmail.com": {nick:"nick1", password:"pass1"},
-  "nick2@gmail.com": {nick:"nick2", password:"pass2"},
-  "nick3@gmail.com": {nick:"nick3", password:"pass3"},
-  "nick4@gmail.com": {nick:"nick4", password:"pass4"},
-  "nick5@gmail.com": {nick:"nick5", password:"pass5"},
-  "nick6@gmail.com": {nick:"nick6", password:"pass6"},
-  "nick7@gmail.com": {nick:"nick7", password:"pass7"},
-  "nick8@gmail.com": {nick:"nick8", password:"pass8"},
-  "nick9@gmail.com": {nick:"nick9", password:"pass9"},
-  "nick10@gmail.com": {nick:"nick10", password:"pass10"}
-};
-
-loginBtn.onclick = () => {
-  const email = document.getElementById("loginEmail").value.trim().toLowerCase();
-  const password = document.getElementById("loginPassword").value.trim();
-  loginError.textContent = "";
-
-  const user = authorizedUsers[email];
-  if(!user || user.password !== password){
-    loginError.textContent = "Неправильная почта или пароль!";
-    return;
-  }
-
-  currentStreamerNick = user.nick;
-  loginScreen.style.display = "none";
-  adminPanel.style.display = "block";
-
-  // Загружаем данные стримера
-  db.ref(`events/${currentStreamerNick}/current`).once("value")
-    .then(snapshot=>{
-      const data = snapshot.val() || {};
-      if(data.eventType) document.getElementById("eventType").value = data.eventType;
-      if(data.eventNumber) document.getElementById("eventNumber").value = data.eventNumber;
-      if(data.totalSpent) document.getElementById("totalSpent").value = data.totalSpent;
-      if(data.bonuses) bonuses = data.bonuses;
-      render();
-    });
-};
-
-/* === Далее твой оригинальный код админки без изменений === */
-
 const MAX_EVENT = 999;
 const MAX_AMOUNT = 99999999;
 const MAX_BONUSES = 100;
@@ -214,7 +139,6 @@ function restrict(el,max){
 }
 
 function update(){
-  if(!currentStreamerNick) return;
   const totalSpent = parse(totalSpentEl.value);
   const totalWin = bonuses.reduce((s,b)=>s+(b.win||0),0);
   const opened = bonuses.filter(b=>b.opened).length;
@@ -223,10 +147,10 @@ function update(){
   ratioEl.value = totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+"x" : "";
   bonusCountEl.value = opened+" / "+bonuses.length;
 
-  db.ref(`events/${currentStreamerNick}/current`).set({
+  db.ref("events/ubtez_current").set({
     eventType:eventTypeEl.value,
     eventNumber:parse(eventNumberEl.value),
-    streamerName:currentStreamerNick,
+    streamerName:"ubtez",
     totalSpent,
     bonuses
   });
