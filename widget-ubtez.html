@@ -21,11 +21,11 @@ body{
 
 .widget{
   width:520px;
-  background:linear-gradient(180deg,#3f154f 0%,#2b0f36 60%,#260c30 100%);
   border-radius:22px;
   padding:26px;
   color:#fff;
   border:1px solid rgba(255,255,255,.08);
+  transition: background 0.5s ease;
 }
 
 /* HEADER */
@@ -104,7 +104,7 @@ body{
 
 <body>
 
-<div class="widget">
+<div class="widget" id="widget">
 
   <div class="header">
     <div class="left-header">
@@ -152,6 +152,14 @@ const db = firebase.database();
 const params = new URLSearchParams(window.location.search);
 const streamer = params.get("streamer") || "ubtez";
 const mode = params.get("mode") || "horizontal";
+
+// Меняем фон виджета в зависимости от режима
+const widgetEl = document.getElementById("widget");
+if(mode === "vertical"){
+  widgetEl.style.background = "linear-gradient(180deg,#013220 0%,#026644 60%,#014d36 100%)"; // тёмный зелёно-изумрудный
+}else{
+  widgetEl.style.background = "linear-gradient(180deg,#3f154f 0%,#2b0f36 60%,#260c30 100%)"; // стандартный
+}
 
 // Ссылка на Firebase с учётом режима
 const ref = db.ref(`events/${mode}/${streamer}/current`);
