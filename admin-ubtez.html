@@ -4,11 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WIDGET PANEL</title>
-  <link rel="icon" href="data:image/svg+xml,
+<link rel="icon" href="data:image/svg+xml,
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
-  <text x='50' y='75' font-size='80' text-anchor='middle'>💻</text>
+<text x='50' y='75' font-size='80' text-anchor='middle'>💻</text>
 </svg>">
-
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -39,105 +38,87 @@ input:focus, select:focus{border-color:#ffd76a;}
 </head>
 
 <body>
-
 <div class="panel">
-
 <h1>WIDGET PANEL</h1>
 
-<!-- Секция полей 2x2 -->
 <div class="section">
-  <div class="row">
-    <div>
-      <label>Номер события</label>
-      <input type="text" id="eventNumber">
-    </div>
-    <div>
-      <label>Валюта виджета</label>
-      <select id="widgetCurrency">
-        <option value="">—</option>
-        <option value="RUB">₽ (Рубль)</option>
-        <option value="USD">$ (Доллар)</option>
-        <option value="EUR">€ (Евро)</option>
-        <option value="KZT">₸ (Тенге)</option>
-        <option value="UAH">₴ (Гривня)</option>
-        <option value="BYN">Br (Бел. рубль)</option>
-        <option value="USDT">₮ (Usdt)</option>
-        <option value="BTC">₿ (Bitcoin)</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="row">
-    <div>
-      <label>Тип события</label>
-      <select id="eventType">
-        <option value="">—</option>
-        <option value="bonusbuy">Bonusbuy</option>
-        <option value="bonushunt">Bonushunt</option>
-      </select>
-    </div>
-    <div>
-      <label>Режим виджета</label>
-      <select id="mode">
-        <option value="">—</option>
-        <option value="horizontal">Горизонтальный</option>
-        <option value="vertical">Вертикальный</option>
-      </select>
-    </div>
-  </div>
+<div class="row">
+<div>
+<label>Номер события</label>
+<input type="text" id="eventNumber">
+</div>
+<div>
+<label>Валюта виджета</label>
+<select id="widgetCurrency">
+<option value="">—</option>
+<option value="RUB">₽</option>
+<option value="USD">$</option>
+<option value="EUR">€</option>
+<option value="KZT">₸</option>
+<option value="UAH">₴</option>
+<option value="BYN">Br</option>
+<option value="USDT">₮</option>
+<option value="BTC">₿</option>
+</select>
+</div>
 </div>
 
-<!-- Секция депозитов -->
-<div class="section">
-  <label>Общий депозит на событие (ввести)</label>
-  <div class="input-row">
-    <input type="text" id="totalSpent">
-  </div>
-
-  <label style="margin-top:15px;">Общий выигрыш с события (авто)</label>
-  <div class="input-row">
-    <input type="text" id="totalWin" disabled>
-  </div>
-
-  <label style="margin-top:15px;">Множитель окупаемости события (авто)</label>
-  <div class="input-row">
-    <input type="text" id="ratio" disabled>
-  </div>
-
-  <label style="margin-top:15px;">Открытые и закрытые бонусы (авто)</label>
-  <div class="input-row">
-    <input type="text" id="bonusCount" disabled>
-  </div>
+<div class="row">
+<div>
+<label>Тип события</label>
+<select id="eventType">
+<option value="">—</option>
+<option value="bonusbuy">Bonusbuy</option>
+<option value="bonushunt">Bonushunt</option>
+</select>
+</div>
+<div>
+<label>Режим виджета</label>
+<select id="mode">
+<option value="horizontal" selected>Горизонтальный</option>
+<option value="vertical">Вертикальный</option>
+</select>
+</div>
+</div>
 </div>
 
-<!-- Секция слотов -->
 <div class="section">
-  <button class="button" id="addBonusBtn">Добавить слот</button>
-  <button class="button" id="clearSlotsBtn">Очистить слоты</button>
+<label>Общий депозит</label>
+<div class="input-row"><input type="text" id="totalSpent"></div>
 
-  <div class="limit-warning" id="limitWarning" style="display:none;">
-    Достигнут лимит 100 бонусов
-  </div>
+<label style="margin-top:15px;">Общий выигрыш</label>
+<div class="input-row"><input type="text" id="totalWin" disabled></div>
 
-  <div class="bonus-list" id="bonusList"></div>
+<label style="margin-top:15px;">Множитель</label>
+<div class="input-row"><input type="text" id="ratio" disabled></div>
+
+<label style="margin-top:15px;">Бонусы</label>
+<div class="input-row"><input type="text" id="bonusCount" disabled></div>
 </div>
 
+<div class="section">
+<button class="button" id="addBonusBtn">Добавить слот</button>
+<button class="button" id="clearSlotsBtn">Очистить слоты</button>
+<div class="limit-warning" id="limitWarning" style="display:none;">Достигнут лимит 100 бонусов</div>
+<div class="bonus-list" id="bonusList"></div>
+</div>
 </div>
 
 <script>
 firebase.initializeApp({
-  apiKey:"AIzaSyAvA5CAcKwuuHC2Cl8KlUbnkR9BJfp_9pw",
-  databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com"
+apiKey:"AIzaSyAvA5CAcKwuuHC2Cl8KlUbnkR9BJfp_9pw",
+databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com"
 });
 
 const db = firebase.database();
 const streamerKey = (location.pathname.match(/admin-(.*)\.html$/)||[])[1] || "ubtez";
 
+let bonuses = [];
+let isLoaded = false;
+
 const MAX_EVENT = 999;
 const MAX_AMOUNT = 99999999;
 const MAX_BONUSES = 100;
-
-let bonuses = [];
 
 const eventNumberEl = document.getElementById("eventNumber");
 const eventTypeEl = document.getElementById("eventType");
@@ -154,151 +135,121 @@ function format(n){return Number(n||0).toLocaleString("ru-RU");}
 function parse(v){return parseInt(v.replace(/\s/g,""))||0;}
 
 function restrict(el,max){
-  el.addEventListener("input",e=>{
-    let val = e.target.value.replace(/[^0-9]/g,"");
-    if(val===""){e.target.value=""; return;}
-    let num = parseInt(val);
-    if(num>max) num=max;
-    e.target.value = format(num);
-    update();
-  });
+el.addEventListener("input",e=>{
+let val=e.target.value.replace(/[^0-9]/g,"");
+if(val===""){e.target.value="";return;}
+let num=parseInt(val);
+if(num>max)num=max;
+e.target.value=format(num);
+update();
+});
 }
 
 function update(){
-  const totalSpent = parse(totalSpentEl.value);
-  const totalWin = bonuses.reduce((s,b)=>s+(b.win||0),0);
-  const opened = bonuses.filter(b=>b.opened).length;
+if(!isLoaded) return;
 
-  totalWinEl.value = format(totalWin);
-  ratioEl.value = totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+"x" : "";
-  bonusCountEl.value = opened+" / "+bonuses.length;
+const totalSpent=parse(totalSpentEl.value);
+const totalWin=bonuses.reduce((s,b)=>s+(b.win||0),0);
+const opened=bonuses.filter(b=>b.opened).length;
 
-  const selectedMode = modeEl.value || "horizontal";
+totalWinEl.value=format(totalWin);
+ratioEl.value=totalSpent>0?(totalWin/totalSpent).toFixed(2)+"x":"";
+bonusCountEl.value=opened+" / "+bonuses.length;
 
-  db.ref(`events/${selectedMode}/${streamerKey}/current`).set({
-    eventType: eventTypeEl.value,
-    eventNumber: parse(eventNumberEl.value),
-    streamerName: streamerKey,
-    totalSpent,
-    bonuses,
-    widgetCurrency: widgetCurrencyEl.value
-  });
+const selectedMode=modeEl.value;
+
+db.ref(`events/${selectedMode}/${streamerKey}/current`).set({
+eventType:eventTypeEl.value,
+eventNumber:parse(eventNumberEl.value),
+streamerName:streamerKey,
+totalSpent,
+bonuses,
+widgetCurrency:widgetCurrencyEl.value
+});
 }
 
 function render(){
-  bonusListEl.innerHTML="";
-  limitWarning.style.display = bonuses.length>=MAX_BONUSES ? "block" : "none";
+bonusListEl.innerHTML="";
+limitWarning.style.display=bonuses.length>=MAX_BONUSES?"block":"none";
 
-  bonuses.forEach((b,i)=>{
-    const div = document.createElement("div");
-    div.className="bonus-item"+(b.opened?" opened":"");
-    div.setAttribute("draggable","true");
-    div.dataset.index = i;
-    div.innerHTML=`
-      <div class="slot-number">${i+1}</div>
-      <div>
-        <input type="text" placeholder="Название слота" value="${b.name||""}" ${b.opened?"disabled":""} style="width:100%;margin-bottom:6px;">
-        <input type="text" placeholder="Сумма покупки" value="${b.cost?format(b.cost):""}" ${b.opened?"disabled":""} style="width:49%;">
-        <input type="text" placeholder="Сумма выигрыша" value="${b.win?format(b.win):""}" ${b.opened?"disabled":""} style="width:49%;float:right;">
-        <button class="button button-small" style="margin-top:6px;width:100%;">${b.opened?"ОТКРЫТ":"ЗАКРЫТ"}</button>
-      </div>
-      <div class="delete-slot">🗑</div>
-    `;
+bonuses.forEach((b,i)=>{
+const div=document.createElement("div");
+div.className="bonus-item"+(b.opened?" opened":"");
+div.innerHTML=`
+<div class="slot-number">${i+1}</div>
+<div>
+<input type="text" value="${b.name||""}" ${b.opened?"disabled":""}>
+<input type="text" value="${b.cost?format(b.cost):""}" ${b.opened?"disabled":""} style="width:49%;">
+<input type="text" value="${b.win?format(b.win):""}" ${b.opened?"disabled":""} style="width:49%;float:right;">
+<button class="button button-small" style="margin-top:6px;width:100%;">${b.opened?"ОТКРЫТ":"ЗАКРЫТ"}</button>
+</div>
+<div class="delete-slot">🗑</div>
+`;
 
-    const inputs = div.querySelectorAll("input");
-    const btn = div.querySelector("button");
-    const del = div.querySelector(".delete-slot");
+const inputs=div.querySelectorAll("input");
+const btn=div.querySelector("button");
+const del=div.querySelector(".delete-slot");
 
-    restrict(inputs[1],MAX_AMOUNT);
-    restrict(inputs[2],MAX_AMOUNT);
+restrict(inputs[1],MAX_AMOUNT);
+restrict(inputs[2],MAX_AMOUNT);
 
-    inputs[0].oninput=e=>{b.name=e.target.value;update();}
-    inputs[1].oninput=e=>{b.cost=parse(e.target.value);update();}
-    inputs[2].oninput=e=>{b.win=parse(e.target.value);update();}
+inputs[0].oninput=e=>{b.name=e.target.value;update();}
+inputs[1].oninput=e=>{b.cost=parse(e.target.value);update();}
+inputs[2].oninput=e=>{b.win=parse(e.target.value);update();}
+btn.onclick=()=>{b.opened=!b.opened;render();}
+del.onclick=()=>{bonuses.splice(i,1);render();}
 
-    btn.onclick=()=>{b.opened=!b.opened;render();}
-    del.onclick=()=>{bonuses.splice(i,1);render();}
+bonusListEl.appendChild(div);
+});
 
-    bonusListEl.appendChild(div);
-  });
-
-  let dragSrcEl = null;
-  const items = document.querySelectorAll('.bonus-item');
-  items.forEach(item=>{
-    item.addEventListener('dragstart', e=>{
-      dragSrcEl = item;
-      item.classList.add('dragging');
-    });
-    item.addEventListener('dragend', e=>{
-      item.classList.remove('dragging');
-    });
-    item.addEventListener('dragover', e=>{
-      e.preventDefault();
-      const target = e.currentTarget;
-      if(target===dragSrcEl) return;
-      const srcIndex = parseInt(dragSrcEl.dataset.index);
-      const tgtIndex = parseInt(target.dataset.index);
-      bonuses.splice(tgtIndex,0,bonuses.splice(srcIndex,1)[0]);
-      render();
-    });
-  });
-
-  update();
+update();
 }
 
-/* 🔥 НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ ПО РЕЖИМУ */
 function loadDataByMode(mode){
-  db.ref(`events/${mode}/${streamerKey}/current`).once("value")
-    .then(snapshot=>{
-      const data = snapshot.val();
-
-      if(data){
-        eventNumberEl.value = data.eventNumber ? format(data.eventNumber) : "";
-        eventTypeEl.value = data.eventType || "";
-        widgetCurrencyEl.value = data.widgetCurrency || "";
-        totalSpentEl.value = data.totalSpent ? format(data.totalSpent) : "";
-        bonuses = data.bonuses || [];
-      } else {
-        eventNumberEl.value="";
-        eventTypeEl.value="";
-        widgetCurrencyEl.value="";
-        totalSpentEl.value="";
-        bonuses=[];
-      }
-
-      render();
-    });
+isLoaded=false;
+db.ref(`events/${mode}/${streamerKey}/current`).once("value")
+.then(snapshot=>{
+const data=snapshot.val();
+if(data){
+eventNumberEl.value=data.eventNumber?format(data.eventNumber):"";
+eventTypeEl.value=data.eventType||"";
+widgetCurrencyEl.value=data.widgetCurrency||"";
+totalSpentEl.value=data.totalSpent?format(data.totalSpent):"";
+bonuses=data.bonuses||[];
+}else{
+eventNumberEl.value="";
+eventTypeEl.value="";
+widgetCurrencyEl.value="";
+totalSpentEl.value="";
+bonuses=[];
+}
+isLoaded=true;
+render();
+});
 }
 
 restrict(eventNumberEl,MAX_EVENT);
 restrict(totalSpentEl,MAX_AMOUNT);
 
 document.getElementById("addBonusBtn").onclick=()=>{
-  if(bonuses.length>=MAX_BONUSES) return;
-  bonuses.push({name:"",cost:0,win:0,opened:false});
-  render();
+if(bonuses.length>=MAX_BONUSES)return;
+bonuses.push({name:"",cost:0,win:0,opened:false});
+render();
 };
 
 document.getElementById("clearSlotsBtn").onclick=()=>{
-  bonuses=[];
-  render();
+bonuses=[];
+render();
 };
 
-/* 🔥 ЗАГРУЗКА ПРИ СТАРТЕ */
-window.addEventListener("DOMContentLoaded", ()=>{
-  const initialMode = modeEl.value || "horizontal";
-  loadDataByMode(initialMode);
+window.addEventListener("DOMContentLoaded",()=>{
+loadDataByMode(modeEl.value);
 });
 
-/* 🔥 ЗАГРУЗКА ПРИ СМЕНЕ РЕЖИМА */
-modeEl.addEventListener("change", ()=>{
-  const selectedMode = modeEl.value || "horizontal";
-  loadDataByMode(selectedMode);
+modeEl.addEventListener("change",()=>{
+loadDataByMode(modeEl.value);
 });
-
-render();
 </script>
-
 
 </body>
 </html>
