@@ -139,103 +139,82 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 
-// URL PARAMS (фикс регистра)
+// URL
 const params = new URLSearchParams(window.location.search);
 const streamer = (params.get("streamer") || "ubtez").toLowerCase();
-const mode = (params.get("mode") || "horizontal").toLowerCase();
+let mode = (params.get("mode") || "horizontal").toLowerCase();
 
-// DOM
+// защита от кривых значений
+if(mode !== "vertical") mode = "horizontal";
+
+document.getElementById("streamerName").innerHTML =
+  streamer.toUpperCase()+" <span>🃏</span>";
+
 const widgetEl = document.getElementById("widget");
 const listEl = document.getElementById("list");
 
-document.getElementById("streamerName").innerHTML =
-  streamer.toUpperCase() + " <span>🃏</span>";
+// стили режима
+const perPage = mode==="vertical"?5:10;
+listEl.style.height = mode==="vertical"?"215px":"430px";
+widgetEl.style.background = mode==="vertical"
+  ?"linear-gradient(180deg,#013220 0%,#026644 60%,#014d36 100%)"
+  :"linear-gradient(180deg,#3f154f 0%,#2b0f36 60%,#260c30 100%)";
 
-// Валюты
+// валюты
 const currencyMap = {
-  RUB:"₽",
-  USD:"$",
-  EUR:"€",
-  KZT:"₸",
-  UAH:"₴",
-  BYN:"Br",
-  USDT:" USDT",
-  BTC:" BTC"
+  RUB:"₽", USD:"$", EUR:"€", KZT:"₸",
+  UAH:"₴", BYN:"Br", USDT:" USDT", BTC:" BTC"
 };
 
-let currencySymbol = "";
-let perPage = mode === "vertical" ? 5 : 10;
-let currentPage = 0;
-let interval = null;
+let currencySymbol="";
+let currentPage=0;
+let interval=null;
 
-// Размеры и фон
-listEl.style.height = mode === "vertical" ? "215px" : "430px";
-widgetEl.style.background = mode === "vertical"
-  ? "linear-gradient(180deg,#013220 0%,#026644 60%,#014d36 100%)"
-  : "linear-gradient(180deg,#3f154f 0%,#2b0f36 60%,#260c30 100%)";
-
-// Утилиты
 function format(n){ return Number(n||0).toLocaleString("ru-RU"); }
-function limitName(name){
-  return !name ? "" : name.length<=25 ? name : name.substring(0,22)+"...";
-}
-function money(n){
-  return currencySymbol ? format(n)+currencySymbol : format(n);
-}
+function limitName(n){ return !n?"":n.length<=25?n:n.substring(0,22)+"..."; }
+function money(n){ return currencySymbol?format(n)+currencySymbol:format(n); }
 
-// Рендер
 function render(data){
 
-  const bonuses = data.bonuses || [];
-  const totalSpent = data.totalSpent || 0;
-  const totalWin = bonuses.reduce((s,b)=>s+(b.win||0),0);
-  const opened = bonuses.filter(b=>b.opened).length;
-  const total = bonuses.length;
+  const bonuses=data.bonuses||[];
+  const totalSpent=data.totalSpent||0;
+  const totalWin=bonuses.reduce((s,b)=>s+(b.win||0),0);
+  const opened=bonuses.filter(b=>b.opened).length;
+  const total=bonuses.length;
 
-  document.getElementById("spent").textContent = money(totalSpent);
-  document.getElementById("ratio").textContent =
-    totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+"x" : "0x";
-  document.getElementById("count").textContent = opened+"/"+total;
+  document.getElementById("spent").textContent=money(totalSpent);
+  document.getElementById("ratio").textContent=
+    totalSpent>0?(totalWin/totalSpent).toFixed(2)+"x":"0x";
+  document.getElementById("count").textContent=opened+"/"+total;
 
-  const maxBonus = bonuses.reduce((max,b)=>
-    (b.win||0)>(max.win||0)?b:max , {win:0});
+  const maxBonus=bonuses.reduce((m,b)=>
+    (b.win||0)>(m.win||0)?b:m ,{win:0});
 
-  document.getElementById("biggest").innerHTML =
+  document.getElementById("biggest").innerHTML=
     maxBonus.win>0
-      ? `🏆 ${money(maxBonus.win)} — ${limitName(maxBonus.name)} (${money(maxBonus.cost)})`
-      : "🏆 —";
+      ?`🏆 ${money(maxBonus.win)} — ${limitName(maxBonus.name)} (${money(maxBonus.cost)})`
+      :"🏆 —";
 
-  const totalPages = Math.ceil(total/perPage);
-  const nextIndex = bonuses.findIndex(b=>!b.opened);
+  const totalPages=Math.ceil(total/perPage);
+  const nextIndex=bonuses.findIndex(b=>!b.opened);
 
-  if(opened !== total){
-    if(interval){ clearInterval(interval); interval=null; }
-    if(nextIndex>=0){
-      currentPage = Math.floor(nextIndex/perPage);
-    }
+  if(opened!==total){
+    if(interval){clearInterval(interval);interval=null;}
+    if(nextIndex>=0) currentPage=Math.floor(nextIndex/perPage);
   }
 
-  listEl.style.opacity=0;
-
-  setTimeout(()=>{
-    listEl.innerHTML="";
-    const start=currentPage*perPage;
-    const slice=bonuses.slice(start,start+perPage);
-
-    slice.forEach((b,i)=>{
-      const div=document.createElement("div");
-      const globalIndex=start+i;
-      const isCurrent=globalIndex===nextIndex;
-      div.className="item"+(isCurrent?" current":"");
-      div.innerHTML=`
-        <span>${globalIndex+1}. ${limitName(b.name)} (${money(b.cost)})</span>
-        <span>${b.opened?money(b.win):"-"}</span>
-      `;
-      listEl.appendChild(div);
-    });
-
-    listEl.style.opacity=1;
-  },150);
+  listEl.innerHTML="";
+  const start=currentPage*perPage;
+  bonuses.slice(start,start+perPage).forEach((b,i)=>{
+    const div=document.createElement("div");
+    const globalIndex=start+i;
+    div.className="item"+(globalIndex===nextIndex?" current":"");
+    div.innerHTML=`
+      <span>${globalIndex+1}. ${limitName(b.name)} (${money(b.cost)})</span>
+      <span>${b.opened?money(b.win):"-"}</span>
+    `;
+    listEl.appendChild(div);
+  });
 
   if(opened===total && totalPages>1 && !interval){
     interval=setInterval(()=>{
@@ -246,18 +225,17 @@ function render(data){
   }
 }
 
-// REALTIME SUBSCRIBE
+// SUBSCRIBE
 db.ref(`events/${mode}/${streamer}/current`)
-.on("value", snap => {
-
-  const data = snap.val();
+.on("value",snap=>{
+  const data=snap.val();
   if(!data) return;
 
   currencySymbol = currencyMap[data.widgetCurrency] || "";
 
-  const type = (data.eventType || "bonusbuy").toLowerCase();
+  const type=(data.eventType||"bonusbuy").toLowerCase();
   document.getElementById("emoji").textContent =
-    type==="bonushunt" ? "🍀" : "🎰";
+    type==="bonushunt"?"🍀":"🎰";
 
   document.getElementById("title").textContent =
     type.toUpperCase()+" #"+(data.eventNumber||0);
