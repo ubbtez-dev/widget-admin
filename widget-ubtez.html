@@ -148,9 +148,13 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 
-// Получаем имя стримера из URL, по умолчанию ubtez
-const streamer = new URLSearchParams(window.location.search).get("streamer") || "ubtez";
-const ref = db.ref(`events/${streamer}/current`);
+// Получаем параметры из URL: streamer + mode
+const params = new URLSearchParams(window.location.search);
+const streamer = params.get("streamer") || "ubtez";
+const mode = params.get("mode") || "horizontal";
+
+// Ссылка на Firebase с учётом режима
+const ref = db.ref(`events/${mode}/${streamer}/current`);
 
 const perPage = 10;
 let currentPage = 0;
