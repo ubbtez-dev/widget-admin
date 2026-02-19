@@ -152,23 +152,16 @@ const params = new URLSearchParams(window.location.search);
 const streamer = params.get("streamer") || "ubtez";
 const mode = params.get("mode") || "horizontal";
 
-// Настройки списка и слотов
-let perPage = 10;
+// Настройка списка и цвета по режиму
 const widgetEl = document.getElementById("widget");
 const listEl = document.getElementById("list");
 
-// Настройка режима
-if(mode === "vertical"){
-  widgetEl.style.background = "linear-gradient(180deg,#013220 0%,#026644 60%,#014d36 100%)";
-  listEl.style.height = "215px"; // 5 слотов * 43px + немного отступа
-  perPage = 5;
-}else{
-  widgetEl.style.background = "linear-gradient(180deg,#3f154f 0%,#2b0f36 60%,#260c30 100%)";
-  listEl.style.height = "430px"; // 10 слотов
-  perPage = 10;
-}
+let perPage = mode === "vertical" ? 5 : 10;
+listEl.style.height = mode === "vertical" ? "215px" : "430px";
+widgetEl.style.background = mode === "vertical" 
+  ? "linear-gradient(180deg,#013220 0%,#026644 60%,#014d36 100%)" 
+  : "linear-gradient(180deg,#3f154f 0%,#2b0f36 60%,#260c30 100%)";
 
-// Пагинация и рендер
 let currentPage = 0;
 let interval = null;
 
@@ -183,11 +176,9 @@ function render(bonuses,totalSpent,totalWin,opened,total){
     (b.win||0) > (max.win||0) ? b : max , {win:0});
 
   const biggestBlock = document.getElementById("biggest");
-  if(maxBonus.win>0){
-    biggestBlock.innerHTML = `🏆 ${format(maxBonus.win)}₽ — ${limitName(maxBonus.name)} (${format(maxBonus.cost)}₽)`;
-  }else{
-    biggestBlock.innerHTML = `🏆 —`;
-  }
+  biggestBlock.innerHTML = maxBonus.win>0 
+    ? `🏆 ${format(maxBonus.win)}₽ — ${limitName(maxBonus.name)} (${format(maxBonus.cost)}₽)` 
+    : `🏆 —`;
 
   if(opened !== total){
     if(interval){ clearInterval(interval); interval=null; }
@@ -224,17 +215,18 @@ function render(bonuses,totalSpent,totalWin,opened,total){
   }
 }
 
-// Подписка на данные
+// Подписка на данные (одна ссылка на Firebase, работает для обоих режимов)
+const ref = db.ref(`events/${streamer}/current`);
 ref.on("value",snap=>{
-  const data=snap.val();
+  const data = snap.val();
   if(!data) return;
 
-  const bonuses=data.bonuses||[];
-  const totalSpent=data.totalSpent||0;
-  const totalWin=bonuses.reduce((s,b)=>s+(b.win||0),0);
-  const opened=bonuses.filter(b=>b.opened).length;
-  const total=bonuses.length;
-  const type=(data.eventType||"bonusbuy").toLowerCase();
+  const bonuses = data.bonuses||[];
+  const totalSpent = data.totalSpent||0;
+  const totalWin = bonuses.reduce((s,b)=>s+(b.win||0),0);
+  const opened = bonuses.filter(b=>b.opened).length;
+  const total = bonuses.length;
+  const type = (data.eventType||"bonusbuy").toLowerCase();
 
   document.getElementById("emoji").textContent = type==="bonushunt"?"🍀":"🎰";
   document.getElementById("title").textContent = type.toUpperCase()+" #"+(data.eventNumber||0);
