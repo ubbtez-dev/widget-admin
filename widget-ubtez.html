@@ -25,7 +25,7 @@ body{
   padding:26px;
   color:#fff;
   border:1px solid rgba(255,255,255,.08);
-  transition: background 0.5s ease;
+  transition: background 0.5s ease, width 0.3s ease;
 }
 
 /* HEADER */
@@ -148,23 +148,28 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 
-// Получаем параметры из URL: streamer + mode
+// Параметры URL
 const params = new URLSearchParams(window.location.search);
 const streamer = params.get("streamer") || "ubtez";
 const mode = params.get("mode") || "horizontal";
 
-// Меняем фон виджета в зависимости от режима
-const widgetEl = document.getElementById("widget");
-if(mode === "vertical"){
-  widgetEl.style.background = "linear-gradient(180deg,#013220 0%,#026644 60%,#014d36 100%)"; // тёмный зелёно-изумрудный
-}else{
-  widgetEl.style.background = "linear-gradient(180deg,#3f154f 0%,#2b0f36 60%,#260c30 100%)"; // стандартный
-}
-
 // Ссылка на Firebase с учётом режима
 const ref = db.ref(`events/${mode}/${streamer}/current`);
 
-const perPage = 10;
+// Настройки страницы и виджета
+let perPage = 10;
+const widgetEl = document.getElementById("widget");
+
+if(mode === "vertical"){
+  widgetEl.style.background = "linear-gradient(180deg,#013220 0%,#026644 60%,#014d36 100%)";
+  widgetEl.style.width = "360px"; // уменьшенный виджет
+  perPage = 5; // 5 слотов на странице
+}else{
+  widgetEl.style.background = "linear-gradient(180deg,#3f154f 0%,#2b0f36 60%,#260c30 100%)";
+  widgetEl.style.width = "520px";
+}
+
+// Пагинация и рендер
 let currentPage = 0;
 let interval = null;
 
@@ -196,6 +201,7 @@ function render(bonuses,totalSpent,totalWin,opened,total){
     list.innerHTML="";
     const start=currentPage*perPage;
     const slice=bonuses.slice(start,start+perPage);
+
     slice.forEach((b,i)=>{
       const div=document.createElement("div");
       const globalIndex=start+i;
@@ -207,13 +213,14 @@ function render(bonuses,totalSpent,totalWin,opened,total){
       `;
       list.appendChild(div);
     });
+
     list.style.opacity=1;
   },150);
 
   if(opened===total && totalPages>1 && !interval){
-    interval=setInterval(()=>{
+    interval = setInterval(()=>{
       currentPage++;
-      if(currentPage>=totalPages) currentPage=0;
+      if(currentPage >= totalPages) currentPage = 0;
       render(bonuses,totalSpent,totalWin,opened,total);
     },6000);
   }
