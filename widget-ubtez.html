@@ -25,7 +25,7 @@ body{
   padding:26px;
   color:#fff;
   border:1px solid rgba(255,255,255,.08);
-  transition: background 0.5s ease, width 0.3s ease;
+  transition: background 0.5s ease;
 }
 
 /* HEADER */
@@ -74,7 +74,6 @@ body{
 
 /* LIST */
 .list{
-  height:430px;
   overflow:hidden;
   transition:opacity .5s ease;
 }
@@ -153,20 +152,20 @@ const params = new URLSearchParams(window.location.search);
 const streamer = params.get("streamer") || "ubtez";
 const mode = params.get("mode") || "horizontal";
 
-// Ссылка на Firebase с учётом режима
-const ref = db.ref(`events/${mode}/${streamer}/current`);
-
-// Настройки страницы и виджета
+// Настройки списка и слотов
 let perPage = 10;
 const widgetEl = document.getElementById("widget");
+const listEl = document.getElementById("list");
 
+// Настройка режима
 if(mode === "vertical"){
   widgetEl.style.background = "linear-gradient(180deg,#013220 0%,#026644 60%,#014d36 100%)";
-  widgetEl.style.width = "360px"; // уменьшенный виджет
-  perPage = 5; // 5 слотов на странице
+  listEl.style.height = "215px"; // 5 слотов * 43px + немного отступа
+  perPage = 5;
 }else{
   widgetEl.style.background = "linear-gradient(180deg,#3f154f 0%,#2b0f36 60%,#260c30 100%)";
-  widgetEl.style.width = "520px";
+  listEl.style.height = "430px"; // 10 слотов
+  perPage = 10;
 }
 
 // Пагинация и рендер
@@ -177,7 +176,6 @@ function format(n){ return Number(n||0).toLocaleString("ru-RU"); }
 function limitName(name){ return (!name ? "" : name.length<=25 ? name : name.substring(0,22)+"..."); }
 
 function render(bonuses,totalSpent,totalWin,opened,total){
-  const list = document.getElementById("list");
   const totalPages = Math.ceil(total/perPage);
   const nextIndex = bonuses.findIndex(b=>!b.opened);
 
@@ -196,9 +194,9 @@ function render(bonuses,totalSpent,totalWin,opened,total){
     if(nextIndex>=0){ currentPage = Math.floor(nextIndex / perPage); }
   }
 
-  list.style.opacity=0;
+  listEl.style.opacity=0;
   setTimeout(()=>{
-    list.innerHTML="";
+    listEl.innerHTML="";
     const start=currentPage*perPage;
     const slice=bonuses.slice(start,start+perPage);
 
@@ -211,10 +209,10 @@ function render(bonuses,totalSpent,totalWin,opened,total){
         <span>${globalIndex+1}. ${limitName(b.name)} (${format(b.cost)}₽)</span>
         <span>${b.opened?format(b.win)+"₽":"-"}</span>
       `;
-      list.appendChild(div);
+      listEl.appendChild(div);
     });
 
-    list.style.opacity=1;
+    listEl.style.opacity=1;
   },150);
 
   if(opened===total && totalPages>1 && !interval){
