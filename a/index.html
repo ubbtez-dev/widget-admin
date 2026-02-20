@@ -14,6 +14,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <style>
+/* Твои стили остаются без изменений */
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',sans-serif;background:#0e0e11;color:#fff;display:flex;justify-content:center;padding:40px 20px;}
 .panel{width:920px;max-width:100%;background:linear-gradient(180deg,#3f154f 0%,#2b0f36 55%,#260c30 100%);border-radius:20px;padding:30px;box-shadow:0 12px 40px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.06);}
@@ -138,7 +139,9 @@ firebase.initializeApp({
 });
 
 const db = firebase.database();
-const streamerKey = (location.pathname.match(/admin-(.*)\.html$/)||[])[1] || "ubtez";
+
+/* Читаем ник стримера из URL, например /a/ubtez/ */
+const streamerKey = (location.pathname.match(/\/a\/([^\/]+)/)||[])[1] || "ubtez";
 
 const MAX_EVENT = 999;
 const MAX_AMOUNT = 99999999;
@@ -181,7 +184,9 @@ function update(){
   bonusCountEl.value = opened+" / "+bonuses.length;
 
   const selectedMode = modeEl.value || "horizontal";
-  db.ref(`events/${selectedMode}/${streamerKey}/current`).set({
+
+  /* Сохраняем данные в Firebase по streamerKey и режиму */
+  db.ref(`events/${streamerKey}/${selectedMode}/current`).set({
     eventType: eventTypeEl.value,
     eventNumber: parse(eventNumberEl.value),
     streamerName: streamerKey,
@@ -254,7 +259,7 @@ function render(){
 
 /* Загрузка данных по режиму */
 function loadDataByMode(mode){
-  db.ref(`events/${mode}/${streamerKey}/current`).once("value")
+  db.ref(`events/${streamerKey}/${mode}/current`).once("value")
     .then(snapshot=>{
       const data = snapshot.val();
 
