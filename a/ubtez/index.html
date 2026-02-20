@@ -4,12 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WIDGET PANEL</title>
-  <link rel="icon" href="data:image/svg+xml,
+<link rel="icon" href="data:image/svg+xml,
 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
   <text x='50' y='75' font-size='80' text-anchor='middle'>💻</text>
 </svg>">
-
-
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -35,16 +33,15 @@ input:focus, select:focus{border-color:#ffd76a;}
 .bonus-item .delete-slot{cursor:pointer;font-weight:700;color:#ff4d4d;text-align:center;display:flex;align-items:center;justify-content:center;height:100%;}
 .limit-warning{text-align:center;color:#ff4d4d;font-size:13px;margin-top:10px;}
 .bonus-item.dragging{opacity:0.5;}
+.button-row{display:flex;justify-content:space-between;gap:10px;margin-top:10px;}
 </style>
 </head>
 
 <body>
-
 <div class="panel">
-
 <h1>WIDGET PANEL</h1>
 
-<!-- Секция полей 2x2 -->
+<!-- ПОЛЯ -->
 <div class="section">
   <div class="row">
     <div>
@@ -71,7 +68,6 @@ input:focus, select:focus{border-color:#ffd76a;}
     <div>
       <label>Тип события</label>
       <select id="eventType">
-        <option value="">—</option>
         <option value="bonusbuy">Bonusbuy</option>
         <option value="bonushunt">Bonushunt</option>
       </select>
@@ -79,7 +75,6 @@ input:focus, select:focus{border-color:#ffd76a;}
     <div>
       <label>Режим виджета</label>
       <select id="mode">
-        <option value="">—</option>
         <option value="horizontal">Горизонтальный</option>
         <option value="vertical">Вертикальный</option>
       </select>
@@ -87,38 +82,34 @@ input:focus, select:focus{border-color:#ffd76a;}
   </div>
 </div>
 
-<!-- Секция депозитов -->
+<!-- ДЕПОЗИТЫ -->
 <div class="section">
   <label>Общий депозит на событие (ввести)</label>
-  <div class="input-row">
-    <input type="text" id="totalSpent">
-  </div>
+  <div class="input-row"><input type="text" id="totalSpent"></div>
 
   <label style="margin-top:15px;">Общий выигрыш с события (авто)</label>
-  <div class="input-row">
-    <input type="text" id="totalWin" disabled>
-  </div>
+  <div class="input-row"><input type="text" id="totalWin" disabled></div>
 
   <label style="margin-top:15px;">Множитель окупаемости события (авто)</label>
-  <div class="input-row">
-    <input type="text" id="ratio" disabled>
-  </div>
+  <div class="input-row"><input type="text" id="ratio" disabled></div>
 
   <label style="margin-top:15px;">Открытые и закрытые бонусы (авто)</label>
-  <div class="input-row">
-    <input type="text" id="bonusCount" disabled>
-  </div>
+  <div class="input-row"><input type="text" id="bonusCount" disabled></div>
 </div>
 
-<!-- Секция слотов -->
+<!-- СЛОТЫ -->
 <div class="section">
-  <button class="button" id="addBonusBtn">Добавить слот</button>
-  <button class="button" id="clearSlotsBtn">Очистить слоты</button>
-
-  <div class="limit-warning" id="limitWarning" style="display:none;">
-    Достигнут лимит 100 бонусов
+  <div class="button-row">
+    <div style="display:flex;gap:10px;">
+      <button class="button" id="addBonusBtn">Добавить слот</button>
+      <button class="button" id="add10BonusBtn">Добавить 10 слотов</button>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="button" id="clearSlotsBtn">Очистить слоты</button>
+      <button class="button" id="clearWidgetBtn">Очистить виджет</button>
+    </div>
   </div>
-
+  <div class="limit-warning" id="limitWarning" style="display:none;">Достигнут лимит 100 бонусов</div>
   <div class="bonus-list" id="bonusList"></div>
 </div>
 
@@ -174,6 +165,7 @@ function update(){
   bonusCountEl.value = opened+" / "+bonuses.length;
 
   const selectedMode = modeEl.value || "horizontal";
+
   db.ref(`events/${selectedMode}/${streamerKey}/current`).set({
     eventType: eventTypeEl.value,
     eventNumber: parse(eventNumberEl.value),
@@ -203,21 +195,16 @@ function render(){
       </div>
       <div class="delete-slot">🗑</div>
     `;
-
     const inputs = div.querySelectorAll("input");
     const btn = div.querySelector("button");
     const del = div.querySelector(".delete-slot");
-
     restrict(inputs[1],MAX_AMOUNT);
     restrict(inputs[2],MAX_AMOUNT);
-
     inputs[0].oninput=e=>{b.name=e.target.value;update();}
     inputs[1].oninput=e=>{b.cost=parse(e.target.value);update();}
     inputs[2].oninput=e=>{b.win=parse(e.target.value);update();}
-
     btn.onclick=()=>{b.opened=!b.opened;render();}
     del.onclick=()=>{bonuses.splice(i,1);render();}
-
     bonusListEl.appendChild(div);
   });
 
@@ -245,33 +232,68 @@ function render(){
   update();
 }
 
+function loadDataByMode(mode){
+  db.ref(`events/${mode}/${streamerKey}/current`).once("value")
+    .then(snapshot=>{
+      const data = snapshot.val();
+      if(data){
+        eventNumberEl.value = data.eventNumber ? format(data.eventNumber) : "";
+        eventTypeEl.value = data.eventType || "bonusbuy";
+        widgetCurrencyEl.value = data.widgetCurrency || "";
+        totalSpentEl.value = data.totalSpent ? format(data.totalSpent) : "";
+        bonuses = data.bonuses || [];
+      } else {
+        eventNumberEl.value="";
+        eventTypeEl.value="bonusbuy";
+        widgetCurrencyEl.value="";
+        totalSpentEl.value="";
+        bonuses=[];
+      }
+      render();
+    });
+}
+
 restrict(eventNumberEl,MAX_EVENT);
 restrict(totalSpentEl,MAX_AMOUNT);
 
+// кнопки
 document.getElementById("addBonusBtn").onclick=()=>{
   if(bonuses.length>=MAX_BONUSES) return;
   bonuses.push({name:"",cost:0,win:0,opened:false});
   render();
 };
-
+document.getElementById("add10BonusBtn").onclick=()=>{
+  for(let i=0;i<10;i++){
+    if(bonuses.length>=MAX_BONUSES) break;
+    bonuses.push({name:"",cost:0,win:0,opened:false});
+  }
+  render();
+};
 document.getElementById("clearSlotsBtn").onclick=()=>{
   bonuses=[];
   render();
 };
+document.getElementById("clearWidgetBtn").onclick=()=>{
+  bonuses=[];
+  eventNumberEl.value="";
+  totalSpentEl.value="";
+  widgetCurrencyEl.value="";
+  render();
+};
 
-db.ref(`events/horizontal/${streamerKey}/current`).once('value').then(snapshot=>{
-  const data = snapshot.val();
-  if(data){
-    eventNumberEl.value = data.eventNumber || '';
-    eventTypeEl.value = data.eventType || '';
-    widgetCurrencyEl.value = data.widgetCurrency || '';
-    bonuses = data.bonuses || [];
-    render();
-  }
+// загрузка при старте
+window.addEventListener("DOMContentLoaded", ()=>{
+  const initialMode = modeEl.value || "horizontal";
+  loadDataByMode(initialMode);
+});
+
+// загрузка при смене режима
+modeEl.addEventListener("change", ()=>{
+  const selectedMode = modeEl.value || "horizontal";
+  loadDataByMode(selectedMode);
 });
 
 render();
 </script>
-
 </body>
 </html>
