@@ -12,11 +12,11 @@
 body{
   margin:0;
   height:100vh;
-  background:#00ff00;
   display:flex;
   justify-content:center;
   align-items:center;
   font-family:'Inter',sans-serif;
+  background:#00ff00;
 }
 .widget{
   width:520px;
@@ -129,8 +129,7 @@ body{
 </div>
 
 <script>
-
-// FIREBASE INIT
+// ---------------- FIREBASE INIT ----------------
 firebase.initializeApp({
   apiKey:"AIzaSyAvA5CAcKwuuHC2Cl8KlUbnkR9BJfp_9pw",
   authDomain:"adminwidget-b69c9.firebaseapp.com",
@@ -139,19 +138,20 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 
-// URL PARAMS (фикс регистра)
-const params = new URLSearchParams(window.location.search);
-const streamer = (params.get("streamer") || "ubtez").toLowerCase();
-const mode = (params.get("mode") || "horizontal").toLowerCase();
+// ---------------- STREAMER И РЕЖИМ ----------------
+// URL parsing: /w/ubtez/h/ -> streamer=ubtez, mode=h
+const pathParts = location.pathname.split("/").filter(Boolean);
+const streamer = (pathParts[1] || "ubtez").toLowerCase();
+const modeLetter = (pathParts[2] || "h").toLowerCase();
+const mode = modeLetter === "v" ? "vertical" : "horizontal";
 
 // DOM
 const widgetEl = document.getElementById("widget");
 const listEl = document.getElementById("list");
-
 document.getElementById("streamerName").innerHTML =
   streamer.toUpperCase() + " <span>🃏</span>";
 
-// Валюты
+// ---------------- ВАЛЮТЫ ----------------
 const currencyMap = {
   RUB:"₽",
   USD:"$",
@@ -159,33 +159,28 @@ const currencyMap = {
   KZT:"₸",
   UAH:"₴",
   BYN:"Br",
-  USDT:" USDT",
-  BTC:" BTC"
+  USDT:"₮",
+  BTC:"₿"
 };
 
 let currencySymbol = "";
-let perPage = mode === "vertical" ? 5 : 10;
+let perPage = mode==="vertical"?5:10;
 let currentPage = 0;
 let interval = null;
 
 // Размеры и фон
-listEl.style.height = mode === "vertical" ? "215px" : "430px";
-widgetEl.style.background = mode === "vertical"
+listEl.style.height = mode==="vertical"? "215px" : "430px";
+widgetEl.style.background = mode==="vertical" 
   ? "linear-gradient(180deg,#013220 0%,#026644 60%,#014d36 100%)"
   : "linear-gradient(180deg,#3f154f 0%,#2b0f36 60%,#260c30 100%)";
 
-// Утилиты
+// ---------------- УТИЛИТЫ ----------------
 function format(n){ return Number(n||0).toLocaleString("ru-RU"); }
-function limitName(name){
-  return !name ? "" : name.length<=25 ? name : name.substring(0,22)+"...";
-}
-function money(n){
-  return currencySymbol ? format(n)+currencySymbol : format(n);
-}
+function limitName(name){ return !name ? "" : name.length<=25 ? name : name.substring(0,22)+"..."; }
+function money(n){ return currencySymbol ? format(n)+currencySymbol : format(n); }
 
-// Рендер
+// ---------------- РЕНДЕР ----------------
 function render(data){
-
   const bonuses = data.bonuses || [];
   const totalSpent = data.totalSpent || 0;
   const totalWin = bonuses.reduce((s,b)=>s+(b.win||0),0);
@@ -193,35 +188,26 @@ function render(data){
   const total = bonuses.length;
 
   document.getElementById("spent").textContent = money(totalSpent);
-  document.getElementById("ratio").textContent =
-    totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+"x" : "0x";
+  document.getElementById("ratio").textContent = totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+"x" : "0x";
   document.getElementById("count").textContent = opened+"/"+total;
 
-  const maxBonus = bonuses.reduce((max,b)=>
-    (b.win||0)>(max.win||0)?b:max , {win:0});
-
+  const maxBonus = bonuses.reduce((max,b)=>(b.win||0)>(max.win||0)?b:max,{win:0});
   document.getElementById("biggest").innerHTML =
-    maxBonus.win>0
-      ? `🏆 ${money(maxBonus.win)} — ${limitName(maxBonus.name)} (${money(maxBonus.cost)})`
-      : "🏆 —";
+    maxBonus.win>0 ? `🏆 ${money(maxBonus.win)} — ${limitName(maxBonus.name)} (${money(maxBonus.cost)})` : "🏆 —";
 
   const totalPages = Math.ceil(total/perPage);
   const nextIndex = bonuses.findIndex(b=>!b.opened);
 
-  if(opened !== total){
+  if(opened!==total){
     if(interval){ clearInterval(interval); interval=null; }
-    if(nextIndex>=0){
-      currentPage = Math.floor(nextIndex/perPage);
-    }
+    if(nextIndex>=0) currentPage=Math.floor(nextIndex/perPage);
   }
 
   listEl.style.opacity=0;
-
   setTimeout(()=>{
     listEl.innerHTML="";
     const start=currentPage*perPage;
     const slice=bonuses.slice(start,start+perPage);
-
     slice.forEach((b,i)=>{
       const div=document.createElement("div");
       const globalIndex=start+i;
@@ -233,7 +219,6 @@ function render(data){
       `;
       listEl.appendChild(div);
     });
-
     listEl.style.opacity=1;
   },150);
 
@@ -246,25 +231,19 @@ function render(data){
   }
 }
 
-// REALTIME SUBSCRIBE
-db.ref(`events/${mode}/${streamer}/current`)
-.on("value", snap => {
-
+// ---------------- REALTIME SUBSCRIBE ----------------
+db.ref(`events/${mode}/${streamer}/current`).on("value", snap=>{
   const data = snap.val();
   if(!data) return;
 
   currencySymbol = currencyMap[data.widgetCurrency] || "";
+  const type = (data.eventType||"bonusbuy").toLowerCase();
 
-  const type = (data.eventType || "bonusbuy").toLowerCase();
-  document.getElementById("emoji").textContent =
-    type==="bonushunt" ? "🍀" : "🎰";
-
-  document.getElementById("title").textContent =
-    type.toUpperCase()+" #"+(data.eventNumber||0);
+  document.getElementById("emoji").textContent = type==="bonushunt"?"🍀":"🎰";
+  document.getElementById("title").textContent = type.toUpperCase()+" #"+(data.eventNumber||0);
 
   render(data);
 });
-
 </script>
 </body>
 </html>
