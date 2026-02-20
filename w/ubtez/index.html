@@ -1,1 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>WIDGET</title>
 
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<style>
+body{
+  margin:0;
+  height:100vh;
+  background:#00ff00;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-family:'Inter',sans-serif;
+}
+.widget{
+  width:520px;
+  border-radius:22px;
+  padding:26px;
+  color:#fff;
+  border:1px solid rgba(255,255,255,.08);
+  transition: background 0.5s ease;
+}
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:18px;
+}
+.left-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.right-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:24px;
+  font-weight:800;
+}
+.emoji{ font-size:32px; }
+.title{ font-size:24px; font-weight:800; }
+.stats{
+  display:flex;
+  justify-content:space-between;
+  text-align:center;
+  font-size:21px;
+  font-weight:700;
+}
+.divider{
+  height:1px;
+  background:rgba(255,255,255,.15);
+  margin:16px 0;
+}
+.biggest{
+  background:rgba(255,215,106,.10);
+  padding:16px;
+  border-radius:12px;
+  font-size:21px;
+  font-weight:800;
+  color:#ffd76a;
+}
+.list{
+  overflow:hidden;
+  transition:opacity .5s ease;
+}
+.item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  height:43px;
+  font-size:21px;
+  font-weight:600;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.current{
+  color:#ffd76a;
+  font-weight:900;
+}
+.footer-text{
+  margin-top:18px;
+  text-align:center;
+  font-size:16px;
+  opacity:.7;
+  letter-spacing:1px;
+  font-weight:600;
+}
+</style>
+</head>
+
+<body>
+
+<div class="widget" id="widget">
+  <div class="header">
+    <div class="left-header">
+      <div class="emoji" id="emoji">🎰</div>
+      <div class="title" id="title">BONUSBUY #0</div>
+    </div>
+    <div class="right-header" id="streamerName">
+      UBTEZ <span>🃏</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="stats">
+    <div>💰 <span id="spent">0</span></div>
+    <div>❌ <span id="ratio">0x</span></div>
+    <div>⭐ <span id="count">0/0</span></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="biggest" id="biggest">🏆 —</div>
+
+  <div class="divider"></div>
+
+  <div class="list" id="list"></div>
+
+  <div class="footer-text">
+    ЭТО - ТВОЙ БУДУЩИЙ ВИДЖЕТ!
+  </div>
+</div>
+
+<script>
+
+// FIREBASE INIT
+firebase.initializeApp({
+  apiKey:"AIzaSyAvA5CAcKwuuHC2Cl8KlUbnkR9BJfp_9pw",
+  authDomain:"adminwidget-b69c9.firebaseapp.com",
+  databaseURL:"https://adminwidget-b69c9-default-rtdb.firebaseio.com",
+  projectId:"adminwidget-b69c9"
+});
+const db = firebase.database();
+
+// URL PARAMS (фикс регистра)
+const params = new URLSearchParams(window.location.search);
+const streamer = (params.get("streamer") || "ubtez").toLowerCase();
+const mode = (params.get("mode") || "horizontal").toLowerCase();
+
+// DOM
+const widgetEl = document.getElementById("widget");
+const listEl = document.getElementById("list");
+
+document.getElementById("streamerName").innerHTML =
+  streamer.toUpperCase() + " <span>🃏</span>";
+
+// Валюты
+const currencyMap = {
+  RUB:"₽",
+  USD:"$",
+  EUR:"€",
+  KZT:"₸",
+  UAH:"₴",
+  BYN:"Br",
+  USDT:" USDT",
+  BTC:" BTC"
+};
+
+let currencySymbol = "";
+let perPage = mode === "vertical" ? 5 : 10;
+let currentPage = 0;
+let interval = null;
+
+// Размеры и фон
+listEl.style.height = mode === "vertical" ? "215px" : "430px";
+widgetEl.style.background = mode === "vertical"
+  ? "linear-gradient(180deg,#013220 0%,#026644 60%,#014d36 100%)"
+  : "linear-gradient(180deg,#3f154f 0%,#2b0f36 60%,#260c30 100%)";
+
+// Утилиты
+function format(n){ return Number(n||0).toLocaleString("ru-RU"); }
+function limitName(name){
+  return !name ? "" : name.length<=25 ? name : name.substring(0,22)+"...";
+}
+function money(n){
+  return currencySymbol ? format(n)+currencySymbol : format(n);
+}
+
+// Рендер
+function render(data){
+
+  const bonuses = data.bonuses || [];
+  const totalSpent = data.totalSpent || 0;
+  const totalWin = bonuses.reduce((s,b)=>s+(b.win||0),0);
+  const opened = bonuses.filter(b=>b.opened).length;
+  const total = bonuses.length;
+
+  document.getElementById("spent").textContent = money(totalSpent);
+  document.getElementById("ratio").textContent =
+    totalSpent>0 ? (totalWin/totalSpent).toFixed(2)+"x" : "0x";
+  document.getElementById("count").textContent = opened+"/"+total;
+
+  const maxBonus = bonuses.reduce((max,b)=>
+    (b.win||0)>(max.win||0)?b:max , {win:0});
+
+  document.getElementById("biggest").innerHTML =
+    maxBonus.win>0
+      ? `🏆 ${money(maxBonus.win)} — ${limitName(maxBonus.name)} (${money(maxBonus.cost)})`
+      : "🏆 —";
+
+  const totalPages = Math.ceil(total/perPage);
+  const nextIndex = bonuses.findIndex(b=>!b.opened);
+
+  if(opened !== total){
+    if(interval){ clearInterval(interval); interval=null; }
+    if(nextIndex>=0){
+      currentPage = Math.floor(nextIndex/perPage);
+    }
+  }
+
+  listEl.style.opacity=0;
+
+  setTimeout(()=>{
+    listEl.innerHTML="";
+    const start=currentPage*perPage;
+    const slice=bonuses.slice(start,start+perPage);
+
+    slice.forEach((b,i)=>{
+      const div=document.createElement("div");
+      const globalIndex=start+i;
+      const isCurrent=globalIndex===nextIndex;
+      div.className="item"+(isCurrent?" current":"");
+      div.innerHTML=`
+        <span>${globalIndex+1}. ${limitName(b.name)} (${money(b.cost)})</span>
+        <span>${b.opened?money(b.win):"-"}</span>
+      `;
+      listEl.appendChild(div);
+    });
+
+    listEl.style.opacity=1;
+  },150);
+
+  if(opened===total && totalPages>1 && !interval){
+    interval=setInterval(()=>{
+      currentPage++;
+      if(currentPage>=totalPages) currentPage=0;
+      render(data);
+    },6000);
+  }
+}
+
+// REALTIME SUBSCRIBE
+db.ref(`events/${mode}/${streamer}/current`)
+.on("value", snap => {
+
+  const data = snap.val();
+  if(!data) return;
+
+  currencySymbol = currencyMap[data.widgetCurrency] || "";
+
+  const type = (data.eventType || "bonusbuy").toLowerCase();
+  document.getElementById("emoji").textContent =
+    type==="bonushunt" ? "🍀" : "🎰";
+
+  document.getElementById("title").textContent =
+    type.toUpperCase()+" #"+(data.eventNumber||0);
+
+  render(data);
+});
+
+</script>
+</body>
+</html>
